@@ -1,0 +1,13 @@
+{
+  "appId": "uz.zukkobolajon.app",
+  "appName": "Zukko Bolajon",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "android": {
+    "backgroundColor": "#fff4d6",
+    "allowMixedContent": true
+  },
+  "server": {
+    "cleartext": true
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "zukko-bolajon",
+  "version": "1.2.0",
+  "private": true,
+  "description": "Zukko Bolajon: bolalar uchun moslashuvchan ta'lim ilovasi (Android APK / PWA)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/stats.test.js tests/api.test.js tests/children.test.js",
+    "android:init": "npx @capacitor/cli add android",
+    "android:sync": "npx @capacitor/cli sync android",
+    "android:open": "npx @capacitor/cli open android",
+    "android:build": "npx @capacitor/cli copy android && npx @capacitor/cli open android"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^5.3.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/android": "^6.0.0"
+  }
+}

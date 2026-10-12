@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="color-scheme" content="light">
+    <title>Zukko Bolajon: Admin panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500..700&family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --paper: #fbfdff;
+            --grid: #dbe7f4;
+            --ink: #3b2f63;
+            --muted: #5f5784;
+            --pen: #137b68;
+            --pen-soft: #d3ebe4;
+            --margin: #ea8a93;
+            --violet: #7c5cff;
+            --violet-deep: #5b3fd6;
+            --violet-soft: #ece8ff;
+            --gold: #ffd451;
+            --line: #c9d2e6;
+            --bad: #b4231a;
+            --hand: 'Caveat', 'Segoe Script', 'Bradley Hand', 'Brush Script MT', cursive;
+            --ui: 'Fredoka', 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        [hidden] { display: none !important; }
+        html { -webkit-text-size-adjust: 100%; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: var(--ui);
+            font-size: 16px;
+            line-height: 1.45;
+            color: var(--ink);
+            background-color: var(--paper);
+            background-image:
+                linear-gradient(var(--grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+
+        /* Daftarning qizil chetki chizig'i */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 56px;
+            width: 2px;
+            background: var(--margin);
+            opacity: .75;
+            pointer-events: none;
+        }
+
+        .wrap { max-width: 1300px; margin: 0 auto; padding: 0 20px 56px 96px; }
+
+        :focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; border-radius: 6px; }
+
+        /* ---------- Tugmalar ---------- */
+        .btn {
+            font: inherit;
+            font-weight: 500;
+            color: var(--ink);
+            background: var(--paper);
+            border: 2px solid var(--ink);
+            border-radius: 12px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: background .15s;
+        }
+        .btn:hover { background: var(--violet-soft); }
+        .btn:disabled { opacity: .45; cursor: default; background: var(--paper); }
+        .btn.primary { color: #fff; background: var(--violet); border-color: var(--violet); }
+        .btn.primary:hover { background: var(--violet-deep); border-color: var(--violet-deep); }
+        .btn.ghost { border-color: var(--line); }
+
+        /* ---------- Yuqori qator ---------- */
+        .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 20px 0 6px; }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .logo { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: var(--violet-soft); font-size: 26px; }
+        .brand b { display: block; font-family: var(--hand); font-size: 32px; line-height: 1; }
+        .brand .sub { color: var(--muted); font-size: 14px; }
+        .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        #stamp { color: var(--muted); font-size: 14px; margin-right: 4px; }
+
+        /* ---------- Asosiy ko'rsatkich ---------- */
+        .hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 28px 40px; align-items: end; padding: 14px 0 30px; }
+        .big { font-family: var(--hand); font-weight: 700; font-size: clamp(104px, 17vw, 184px); line-height: .82; }
+        .swash { display: block; width: min(100%, 340px); height: 24px; margin-top: 6px; }
+        .hero-lbl { margin: 8px 0 0; font-size: 20px; font-weight: 500; }
+        .hero-note { margin: 2px 0 0; color: var(--muted); font-size: 14px; max-width: 34ch; }
+        .hero-side { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; margin: 0; }
+        .hero-side > div { border-top: 2px dashed var(--line); padding-top: 8px; }
+        .hero-side dt { color: var(--muted); font-size: 15px; }
+        .hero-side dd { margin: 0; font-family: var(--hand); font-weight: 700; font-size: 50px; line-height: 1.02; }
+        .hero-side small { margin-left: 8px; font-family: var(--ui); font-weight: 400; font-size: 14px; color: var(--muted); }
+
+        /* ---------- Varaq (bo'lim) ---------- */
+        .sheet { background: var(--paper); border: 2px dashed var(--line); border-radius: 16px; padding: 22px 24px 24px; margin-bottom: 20px; min-width: 0; }
+        .sheet h2 { margin: 0; font-family: var(--hand); font-weight: 700; font-size: 34px; line-height: 1.05; }
+        .sheet .lead { margin: 4px 0 16px; color: var(--muted); font-size: 15px; max-width: 62ch; }
+        .cols { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 0 20px; align-items: start; }
+
+        .head-row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 16px; }
+        .seg { display: inline-flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+        .seg button { font: inherit; font-size: 14px; font-weight: 500; color: var(--ink); background: transparent; border: 2px solid var(--line); border-radius: 999px; padding: 4px 14px; cursor: pointer; }
+        .seg button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+        /* ---------- Diagramma ---------- */
+        .chart { display: block; width: 100%; height: auto; }
+        .chart .guide { stroke: var(--line); stroke-width: 2; stroke-dasharray: 8 10; }
+        .chart .bar { fill: var(--pen); }
+        .chart .bar.today { fill: var(--violet); }
+        .chart .stub { fill: var(--pen-soft); }
+        .chart text { font-family: var(--ui); font-size: 12px; fill: var(--muted); text-anchor: middle; }
+        .chart text.val { font-family: var(--hand); font-size: 22px; font-weight: 700; fill: var(--ink); }
+        .chart text.axis { text-anchor: start; font-size: 12px; }
+        .summary { margin: 10px 0 0; color: var(--muted); font-size: 15px; }
+
+        /* ---------- Taqsimot ---------- */
+        .dist + .dist { margin-top: 22px; }
+        .dist h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; }
+        .stack { display: flex; height: 22px; border-radius: 8px; overflow: hidden; background: #e6eaf4; }
+        .stack i { display: block; min-width: 0; }
+        .legend { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 4px; }
+        .legend li { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+        .legend .sw { width: 12px; height: 12px; border-radius: 4px; flex: none; }
+        .legend .n { margin-left: auto; font-weight: 600; }
+        .legend .pc { color: var(--muted); font-size: 13px; min-width: 3.4em; text-align: right; }
+
+        /* ---------- Yo'l (voronka) ---------- */
+        .funnel { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+        .funnel li { display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr) 118px; align-items: center; gap: 14px; }
+        .funnel .lb { font-size: 15px; }
+        .track { height: 20px; border-radius: 8px; background: var(--pen-soft); overflow: hidden; }
+        .track i { display: block; height: 100%; background: var(--pen); border-radius: 8px; min-width: 0; }
+        .funnel .ct { text-align: right; font-weight: 600; }
+        .funnel .ct small { color: var(--muted); font-weight: 400; margin-left: 4px; }
+
+        /* ---------- Harf va raqamlar ---------- */
+        .glyphs h3 { margin: 18px 0 8px; font-size: 16px; font-weight: 600; }
+        .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip { display: grid; place-items: center; width: 60px; height: 60px; border: 2px solid var(--line); border-radius: 14px; background: #fff; cursor: default; }
+        .chip b { font-family: var(--hand); font-size: 28px; line-height: 1; }
+        .chip small { font-size: 11px; line-height: 1; }
+        .chip.hi { color: #fff; }
+        .scale { display: flex; align-items: center; gap: 10px; margin-top: 14px; color: var(--muted); font-size: 13px; }
+        .scale i { width: 140px; height: 10px; border-radius: 6px; background: linear-gradient(90deg, rgba(19, 123, 104, .08), rgba(19, 123, 104, .9)); }
+        .picks { margin: 12px 0 0; color: var(--muted); font-size: 15px; }
+        .picks b { color: var(--ink); font-weight: 600; }
+
+        /* ---------- Qo'shimcha ma'lumotlar ---------- */
+        .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0 32px; margin: 0; }
+        .facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 9px 0; border-bottom: 2px dashed var(--line); }
+        .facts dt { color: var(--muted); font-size: 15px; }
+        .facts dd { margin: 0; font-weight: 600; text-align: right; }
+        .facts dd small { color: var(--muted); font-weight: 400; display: block; font-size: 12px; }
+
+        /* ---------- Jadval ---------- */
+        .tbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .tbar label { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+        .tbar input { font: inherit; padding: 8px 12px; border: 2px solid var(--line); border-radius: 12px; width: min(300px, 70vw); color: var(--ink); background: #fff; }
+        .tbar input:focus { border-color: var(--violet); outline: none; }
+        .tablewrap { overflow-x: auto; border: 2px solid var(--line); border-radius: 12px; background: #fff; }
+        table { width: 100%; border-collapse: collapse; min-width: 860px; font-size: 14px; }
+        th, td { padding: 9px 6px; text-align: left; border-bottom: 1px solid #e3e8f3; white-space: nowrap; }
+        tbody tr:last-child td { border-bottom: 0; }
+        tbody tr:hover { background: #f6f4ff; }
+        th { background: #f4f7fc; font-weight: 600; position: sticky; top: 0; }
+        th button { font: inherit; font-weight: 600; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+        th .car { width: 1em; color: var(--violet-deep); }
+        td.num, th.num { text-align: right; }
+        td.num button, th.num button { flex-direction: row-reverse; }
+        .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; background: #b9c0d4; }
+        .mini { display: block; width: 100%; height: 5px; border-radius: 4px; background: var(--pen-soft); margin-top: 4px; overflow: hidden; }
+        .mini i { display: block; height: 100%; background: var(--pen); }
+        .muted { color: var(--muted); }
+        .empty { padding: 26px 12px; text-align: center; color: var(--muted); }
+        .pager { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px; color: var(--muted); font-size: 14px; }
+        .note { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
+
+        /* ---------- Kirish ---------- */
+        .login { min-height: 100vh; display: grid; place-items: center; padding: 24px 20px 24px 76px; }
+        .login-card { width: min(420px, 100%); margin: 0; padding: 28px; }
+        .login-card h1 { margin: 0; font-family: var(--hand); font-size: 44px; line-height: 1; }
+        .login-card p { margin: 6px 0 18px; color: var(--muted); }
+        .login-card label { display: block; font-weight: 500; margin-bottom: 6px; }
+        .login-card input { font: inherit; width: 100%; padding: 11px 14px; border: 2px solid var(--line); border-radius: 12px; color: var(--ink); background: #fff; }
+        .login-card input:focus { border-color: var(--violet); outline: none; }
+        #loginErr { min-height: 24px; margin: 8px 0 12px; color: var(--bad); font-size: 14px; }
+        .login-card .btn { width: 100%; padding: 11px 16px; }
+
+        /* ---------- Kichik ekranlar ---------- */
+        @media (max-width: 900px) {
+            .cols, .hero { grid-template-columns: 1fr; }
+            .funnel li { grid-template-columns: 1fr 100px; }
+            .funnel .track { grid-column: 1 / -1; grid-row: 2; }
+        }
+
+        @media (max-width: 640px) {
+            #chartHost { overflow-x: auto; }
+            .chart { min-width: 600px; }
+            body::before { display: none; }
+            .wrap, .login { padding-left: 16px; padding-right: 16px; }
+            .sheet { padding: 18px 16px 20px; }
+            .hero-side dd { font-size: 42px; }
+            .chip { width: 52px; height: 52px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { transition: none !important; animation: none !important; }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="login" id="loginView" hidden>
+        <form class="sheet login-card" id="loginForm" autocomplete="off">
+            <h1>Admin kirishi</h1>
+            <p>Statistikani ko'rish uchun parolni kiriting.</p>
+            <label for="pw">Parol</label>
+            <input id="pw" type="password" autocomplete="current-password" required>
+            <div id="loginErr" role="alert"></div>
+            <button class="btn primary" type="submit" id="loginBtn">Kirish</button>
+        </form>
+    </main>
+
+    <div class="wrap" id="dash" hidden>
+        <header class="top">
+            <div class="brand">
+                <span class="logo" aria-hidden="true">🎓</span>
+                <div><b>Zukko Bolajon</b><span class="sub">Admin panel</span></div>
+            </div>
+            <div class="tools">
+                <span id="stamp" aria-live="polite"></span>
+                <button class="btn primary" id="btnAdminView" type="button">📊 Oila & Bolalar</button>
+                <button class="btn ghost" id="btnSuperView" type="button">🌐 Super-Admin Analytics</button>
+                <button class="btn" id="refresh" type="button">Yangilash</button>
+                <button class="btn ghost" id="logout" type="button">Chiqish</button>
+            </div>
+        </header>
+
+        <main>
+            <div id="adminPanel">
+            <section class="hero" aria-label="Foydalanuvchilar soni">
+                <div>
+                    <div class="big" id="bigNum">0</div>
+                    <svg class="swash" viewBox="0 0 340 24" aria-hidden="true" preserveAspectRatio="none">
+                        <path d="M4 15 C 64 3, 124 22, 186 10 S 300 6, 336 13" fill="none" stroke="#ffd451" stroke-width="9" stroke-linecap="round" />
+                    </svg>
+                    <p class="hero-lbl">ta foydalanuvchi</p>
+                    <p class="hero-note">Har bir qurilma yoki brauzer profili bitta foydalanuvchi hisoblanadi.</p>
+                </div>
+                <dl class="hero-side" id="heroSide"></dl>
+            </section>
+
+            <div class="cols">
+                <section class="sheet" aria-labelledby="hAct">
+                    <div class="head-row">
+                        <div>
+                            <h2 id="hAct">So'nggi 14 kun</h2>
+                            <p class="lead" id="actLead"></p>
+                        </div>
+                    </div>
+                    <div class="seg" id="seg" role="group" aria-label="Ko'rsatkichni tanlang"></div>
+                    <div id="chartHost"></div>
+                    <p class="summary" id="chartSum"></p>
+                </section>
+
+                <section class="sheet" aria-labelledby="hWho">
+                    <h2 id="hWho">Kim foydalanmoqda</h2>
+                    <p class="lead">Qahramon tanlovi va kirish usuli bo'yicha bo'linish.</p>
+                    <div id="whoHost"></div>
+                </section>
+            </div>
+
+            <section class="sheet" aria-labelledby="hFun">
+                <h2 id="hFun">Bolalar qayergacha yetib boradi</h2>
+                <p class="lead">Foizlar jami foydalanuvchilarga nisbatan olingan.</p>
+                <ol class="funnel" id="funnelHost"></ol>
+            </section>
+
+            <section class="sheet glyphs" aria-labelledby="hGly">
+                <h2 id="hGly">Harflar va raqamlar</h2>
+                <p class="lead">Katak qanchalik to'q bo'lsa, shuncha ko'p bola uni 3 bosqichda ham tugatgan. Katak ustiga olib borsangiz, tafsilot chiqadi.</p>
+                <h3>Harflar</h3>
+                <ul class="chips" id="letterChips"></ul>
+                <h3>Raqamlar</h3>
+                <ul class="chips" id="digitChips"></ul>
+                <div class="scale"><span>0%</span><i aria-hidden="true"></i><span>100% bola tugatgan</span></div>
+                <p class="picks" id="picks"></p>
+            </section>
+
+            <section class="sheet" aria-labelledby="hFact">
+                <h2 id="hFact">Umumiy ma'lumotlar</h2>
+                <p class="lead">Barcha foydalanuvchilar bo'yicha jami va o'rtacha qiymatlar.</p>
+                <dl class="facts" id="factsHost"></dl>
+            </section>
+
+            <section class="sheet" aria-labelledby="hUsr">
+                <h2 id="hUsr">Foydalanuvchilar</h2>
+                <p class="lead">Pochta va telefon raqamlar serverga yashirin ko'rinishda keladi, shuning uchun bu yerda ham to'liq ko'rinmaydi.</p>
+                <div class="tbar">
+                    <label for="q">Qidirish <input id="q" type="search" placeholder="ID, pochta yoki qahramon"></label>
+                    <span class="muted" id="countInfo"></span>
+                </div>
+                <div class="tablewrap">
+                    <table>
+                        <thead id="thead"></thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                </div>
+                <div class="pager">
+                    <span id="pageInfo"></span>
+                    <button class="btn" type="button" id="prev">Oldingi</button>
+                    <button class="btn" type="button" id="next">Keyingi</button>
+                </div>
+            </div>
+
+            <div id="superPanel" hidden>
+                <section class="hero" aria-label="Super-Admin ko'rsatkichlari">
+                    <div>
+                        <div class="big" id="superBigNum">0</div>
+                        <svg class="swash" viewBox="0 0 340 24" aria-hidden="true" preserveAspectRatio="none">
+                            <path d="M4 15 C 64 3, 124 22, 186 10 S 300 6, 336 13" fill="none" stroke="#7c5cff" stroke-width="9" stroke-linecap="round" />
+                        </svg>
+                        <p class="hero-lbl">ta ro'yxatdan o'tgan oila</p>
+                        <p class="hero-note">Tizim bo'yicha agregatsiyalangan global platforma ko'rsatkichlari.</p>
+                    </div>
+                    <dl class="hero-side" id="superHeroSide"></dl>
+                </section>
+
+                <section class="sheet" aria-labelledby="hSuperFamilies">
+                    <h2 id="hSuperFamilies">Barcha ro'yxatdan o'tgan oilalar va bolalar</h2>
+                    <p class="lead">Har bir oila ostidagi barcha bolalar profillari, ularning yoshi, o'rganish vaqti va yutuqlari.</p>
+                    <div class="tablewrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Oila ID</th>
+                                    <th>Kirish ma'lumoti</th>
+                                    <th>Bolalar soni</th>
+                                    <th>Bolalar ro'yxati (Ismi, yoshi, qahramoni)</th>
+                                    <th class="num">Jami vaqt</th>
+                                    <th class="num">Harflar</th>
+                                    <th class="num">Sharlar rekordi</th>
+                                    <th>Oxirgi faollik</th>
+                                </tr>
+                            </thead>
+                            <tbody id="superTbody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bola profilining batafsil modal oynasi -->
+    <div id="childModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:999;padding:20px">
+        <div style="background:#fff;border-radius:24px;max-width:540px;width:100%;max-height:90vh;overflow-y:auto;padding:28px;box-shadow:0 20px 50px rgba(0,0,0,0.3)">
+            <div id="childModalContent"></div>
+            <button class="btn" style="margin-top:20px;width:100%" onclick="document.getElementById('childModal').style.display='none'">Yopish</button>
+        </div>
+    </div>
+
+    <script>
+        'use strict';
+        (() => {
+            const $ = (s, r = document) => r.querySelector(s);
+            const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const pad = n => String(n).padStart(2, '0');
+            const fmt = n => Math.round(n).toLocaleString('en-US').replace(/,/g, ' ');
+            const dec = n => String(Math.round(n * 10) / 10).replace('.', ',');
+            const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+            const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            const LETTERS = ['A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'X', 'Y', 'Z', "O'", "G'", 'Sh', 'Ch', 'Ng'];
+            const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            const HEROES = { muhammad: 'Muhammad', hadicha: 'Hadicha' };
+            const HERO_COLOR = { muhammad: '#2563eb', hadicha: '#ec4899' };
+            const AUTH_LABEL = { google: 'Email', phone: 'Telefon' };
+
+            const TABS = {
+                active: { label: 'Faol bolalar', unit: 'bola' },
+                newUsers: { label: 'Yangi foydalanuvchilar', unit: 'ta yangi' },
+                minutes: { label: "O'qish vaqti (daqiqa)", unit: 'daqiqa' },
+                exercises: { label: 'Mashqlar', unit: 'ta mashq' }
+            };
+
+            const COLS = [
+                { key: 'id', label: 'ID', type: 'str' },
+                { key: 'hero', label: 'Qahramon', type: 'str' },
+                { key: 'authId', label: 'Kirish', type: 'str' },
+                { key: 'children', label: 'Bolalar', type: 'str' },
+                { key: 'letters', label: 'Harflar', type: 'num', num: true },
+                { key: 'digits', label: 'Raqamlar', type: 'num', num: true },
+                { key: 'balloonScore', label: 'Sharlar', type: 'num', num: true },
+                { key: 'coins', label: 'Tangalar', type: 'num', num: true },
+                { key: 'minutes', label: 'Vaqt', type: 'num', num: true },
+                { key: 'exercises', label: 'Mashqlar', type: 'num', num: true },
+                { key: 'lastActive', label: 'Oxirgi faol', type: 'num' },
+                { key: 'created', label: "Qo'shilgan", type: 'num' }
+            ];
+            const PAGE = 15;
+
+            let stats = null, tab = 'active', q = '', page = 0, firstPaint = true;
+            let sort = { key: 'lastActive', dir: -1 };
+
+            /* ---------- Tarmoq ---------- */
+            async function api(path, opts = {}) {
+                const r = await fetch(path, { credentials: 'same-origin', headers: { 'content-type': 'application/json' }, ...opts });
+                let data = null;
+                try { data = await r.json(); } catch (e) { /* javob JSON emas */ }
+                return { ok: r.ok, status: r.status, data };
+            }
+
+            function showLogin(msg) {
+                $('#dash').hidden = true;
+                $('#loginView').hidden = false;
+                $('#loginErr').textContent = msg || '';
+                $('#pw').focus();
+            }
+            function showDash() {
+                $('#loginView').hidden = true;
+                $('#dash').hidden = false;
+            }
+
+            async function load() {
+                try {
+                    const r = await api('/api/admin/stats');
+                    if (r.status === 401) { showLogin(); return; }
+                    if (!r.ok) { $('#stamp').textContent = 'Server javob bermadi'; return; }
+                    stats = r.data;
+                    showDash();
+                    render();
+                } catch (e) {
+                    if ($('#dash').hidden) showLogin("Serverga ulanib bo'lmadi. Server ishlayotganini tekshiring.");
+                    else $('#stamp').textContent = "Serverga ulanib bo'lmadi";
+                }
+            }
+
+            $('#loginForm').addEventListener('submit', async e => {
+                e.preventDefault();
+                const btn = $('#loginBtn'), err = $('#loginErr');
+                err.textContent = '';
+                btn.disabled = true;
+                try {
+                    const r = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: $('#pw').value }) });
+                    if (r.ok) { $('#pw').value = ''; firstPaint = true; await load(); return; }
+                    if (r.status === 401) err.textContent = "Parol noto'g'ri. Qayta urinib ko'ring.";
+                    else if (r.status === 429) err.textContent = `Juda ko'p urinish bo'ldi. ${(r.data && r.data.retryAfter) || 60} soniyadan keyin urinib ko'ring.`;
+                    else err.textContent = 'Server javob bermadi. Keyinroq urinib ko\'ring.';
+                } catch (ex) {
+                    err.textContent = "Serverga ulanib bo'lmadi. Server ishlayotganini tekshiring.";
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+
+            $('#refresh').addEventListener('click', load);
+            $('#logout').addEventListener('click', async () => {
+                try { await api('/api/admin/logout', { method: 'POST', body: '{}' }); } catch (e) { /* baribir chiqamiz */ }
+                stats = null;
+                showLogin();
+            });
+            setInterval(() => { if (!document.hidden && !$('#dash').hidden) load(); }, 30000);
+
+            /* ---------- Formatlash ---------- */
+            function fmtMin(m) {
+                if (m < 60) return fmt(m) + ' daq';
+                const h = Math.floor(m / 60), r = Math.round(m % 60);
+                return r ? `${fmt(h)} soat ${r} daq` : `${fmt(h)} soat`;
+            }
+            function fmtDate(ms) {
+                if (!ms) return '—';
+                const d = new Date(ms);
+                return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+            }
+            function fmtWhen(ms, now) {
+                if (!ms) return '—';
+                const d = new Date(ms), n = new Date(now);
+                const day0 = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+                const diff = Math.round((day0(n) - day0(d)) / 86400000);
+                const hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                if (diff <= 0) return 'bugun ' + hm;
+                if (diff === 1) return 'kecha ' + hm;
+                if (diff < 30) return diff + ' kun oldin';
+                return fmtDate(ms);
+            }
+
+            /* ---------- Chizish ---------- */
+            function render() {
+                renderHero(); renderChart(); renderWho(); renderFunnel(); renderGlyphs(); renderFacts(); renderUsers();
+                const t = new Date(stats.generatedAt);
+                $('#stamp').textContent = `Yangilandi: ${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`;
+                firstPaint = false;
+            }
+
+            function renderHero() {
+                const total = stats.totals.users, el = $('#bigNum');
+                if (firstPaint && !reduceMotion && total > 0) {
+                    const t0 = performance.now(), dur = 650;
+                    const step = now => {
+                        const k = Math.min(1, (now - t0) / dur);
+                        el.textContent = fmt(total * (1 - Math.pow(1 - k, 3)));
+                        if (k < 1) requestAnimationFrame(step); else el.textContent = fmt(total);
+                    };
+                    requestAnimationFrame(step);
+                } else el.textContent = fmt(total);
+
+                const a = stats.active, n = stats.newUsers;
+                const item = (label, v) => `<div><dt>${esc(label)}</dt><dd>${fmt(v)}<small>${total ? pct(v, total) + '%' : ''}</small></dd></div>`;
+                $('#heroSide').innerHTML =
+                    item('Bugun faol', a.today) + item('7 kunda faol', a.last7) +
+                    item('30 kunda faol', a.last30) + item('Yangi (7 kun)', n.last7);
+            }
+
+            function niceMax(v) {
+                const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p;
+                return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+            }
+
+            function renderChart() {
+                $('#seg').innerHTML = Object.entries(TABS).map(([k, t]) =>
+                    `<button type="button" data-tab="${k}" aria-pressed="${k === tab}">${esc(t.label)}</button>`).join('');
+                const daily = stats.daily, key = tab, info = TABS[key];
+                const W = 700, H = 236, L = 8, R = 8, top = 30, base = 192;
+                const slot = (W - L - R) / daily.length, bw = Math.min(34, slot * 0.62);
+                const max = niceMax(Math.max(1, ...daily.map(d => d[key])));
+                let g = `<line class="guide" x1="${L}" x2="${W - R}" y1="${top}" y2="${top}"/><line class="guide" x1="${L}" x2="${W - R}" y1="${(top + base) / 2}" y2="${(top + base) / 2}"/><line class="guide" x1="${L}" x2="${W - R}" y1="${base}" y2="${base}"/>`;
+                g += `<text class="axis" x="${L}" y="${top - 8}">${fmt(max)}</text>`;
+                daily.forEach((d, i) => {
+                    const v = d[key], x = L + slot * i + (slot - bw) / 2, h = (base - top) * v / max, last = i === daily.length - 1;
+                    const [, mm, dd] = d.date.split('-');
+                    if (v > 0) {
+                        g += `<rect class="bar${last ? ' today' : ''}" x="${x}" y="${base - h}" width="${bw}" height="${h}" rx="6"><title>${esc(d.date)}: ${fmt(v)} ${esc(info.unit)}</title></rect>`;
+                        g += `<text class="val" x="${x + bw / 2}" y="${base - h - 6}">${fmt(v)}</text>`;
+                    } else {
+                        g += `<rect class="stub" x="${x}" y="${base - 4}" width="${bw}" height="4" rx="2"><title>${esc(d.date)}: 0</title></rect>`;
+                    }
+                    g += `<text x="${x + bw / 2}" y="${base + 22}">${dd}.${mm}</text>`;
+                });
+                const label = `${info.label}, so'nggi ${daily.length} kun: ` + daily.map(d => `${d.date} ${d[key]}`).join(', ');
+                $('#chartHost').innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">${g}</svg>`;
+
+                const sum = daily.reduce((a, d) => a + d[key], 0);
+                $('#chartSum').textContent = stats.totals.users
+                    ? `${daily.length} kunda jami ${fmt(sum)} ${info.unit}, kuniga o'rtacha ${dec(sum / daily.length)}. Binafsha ustun bugunni bildiradi.`
+                    : "Hali foydalanuvchi yo'q. Bolalar ilovaga kirgach, grafik shu yerda to'ladi.";
+                $('#actLead').textContent = info.label + ' bo\'yicha kunlik ko\'rsatkich.';
+            }
+            $('#seg').addEventListener('click', e => {
+                const b = e.target.closest('[data-tab]');
+                if (b && stats) { tab = b.dataset.tab; renderChart(); }
+            });
+
+            function stackBlock(title, items) {
+                const total = items.reduce((a, i) => a + i.count, 0);
+                const bar = items.filter(i => i.count > 0).map(i => `<i style="width:${(i.count / total) * 100}%;background:${i.color}" title="${esc(i.label)}: ${i.count}"></i>`).join('');
+                const rows = items.map(i => `<li><span class="sw" style="background:${i.color}"></span>${esc(i.label)}<span class="n">${fmt(i.count)}</span><span class="pc">${total ? pct(i.count, total) + '%' : '—'}</span></li>`).join('');
+                return `<div class="dist"><h3>${esc(title)}</h3><div class="stack" role="img" aria-label="${esc(title)}">${bar}</div><ul class="legend">${rows}</ul></div>`;
+            }
+            function renderWho() {
+                const h = stats.heroes, a = stats.auth;
+                $('#whoHost').innerHTML =
+                    stackBlock('Qahramon', [
+                        { label: 'Muhammad', count: h.muhammad, color: HERO_COLOR.muhammad },
+                        { label: 'Hadicha', count: h.hadicha, color: HERO_COLOR.hadicha },
+                        { label: 'Hali tanlamagan', count: h.none, color: '#b9c0d4' }
+                    ]) +
+                    stackBlock('Kirish usuli', [
+                        { label: 'Elektron pochta', count: a.google, color: '#137b68' },
+                        { label: 'Telefon raqam', count: a.phone, color: '#f59e0b' },
+                        { label: 'Hisobdan chiqqan', count: a.none, color: '#b9c0d4' }
+                    ]);
+            }
+
+            function renderFunnel() {
+                const total = stats.totals.users;
+                $('#funnelHost').innerHTML = stats.funnel.map(f =>
+                    `<li><span class="lb">${esc(f.label)}</span><span class="track"><i style="width:${pct(f.count, total)}%"></i></span><span class="ct">${fmt(f.count)}<small>${total ? pct(f.count, total) + '%' : ''}</small></span></li>`).join('');
+            }
+
+            function chips(names, set) {
+                const total = stats.totals.users;
+                return names.map((name, i) => {
+                    const done = set.done[i] || 0, going = set.started[i] || 0, p = pct(done, total);
+                    const a = 0.08 + 0.82 * (p / 100);
+                    const tip = `${name}: ${fmt(done)} bola tugatgan, ${fmt(going)} tasida jarayonda`;
+                    return `<li class="chip${p > 55 ? ' hi' : ''}" style="background:rgba(19,123,104,${a.toFixed(2)})" title="${esc(tip)}" aria-label="${esc(tip)}"><b>${esc(name)}</b><small>${p}%</small></li>`;
+                }).join('');
+            }
+            function renderGlyphs() {
+                $('#letterChips').innerHTML = chips(LETTERS, stats.letters);
+                $('#digitChips').innerHTML = chips(DIGITS, stats.digits);
+                const all = [
+                    ...LETTERS.map((n, i) => ({ n, done: stats.letters.done[i] || 0 })),
+                    ...DIGITS.map((n, i) => ({ n: 'raqam ' + n, done: stats.digits.done[i] || 0 }))
+                ];
+                const any = all.some(x => x.done > 0);
+                if (!stats.totals.users || !any) { $('#picks').textContent = "Hali birorta harf yoki raqam to'liq tugatilmagan."; return; }
+                const by = all.slice().sort((x, y) => y.done - x.done);
+                const top = by.slice(0, 3).map(x => esc(x.n)).join(', ');
+                const low = by.slice(-3).reverse().map(x => esc(x.n)).join(', ');
+                $('#picks').innerHTML = `Eng ko'p tugatilgan: <b>${top}</b>. Eng kam tugatilgan: <b>${low}</b>.`;
+            }
+
+            function renderFacts() {
+                const e = stats.engagement, x = stats.extras, c = stats.certificates;
+                const row = (k, v, sub) => `<div><dt>${esc(k)}</dt><dd>${v}${sub ? `<small>${esc(sub)}</small>` : ''}</dd></div>`;
+                $('#factsHost').innerHTML = [
+                    row("Jami o'qish vaqti", esc(fmtMin(e.totalMinutes)), `bolaga o'rtacha ${fmtMin(e.avgMinutesPerUser)}`),
+                    row('Bajarilgan mashqlar', fmt(e.totalExercises), `bolaga o'rtacha ${dec(e.avgExercisesPerUser)}`),
+                    row('Tugatilgan darslar', fmt(e.totalLessons)),
+                    row("Yig'ilgan tangalar", fmt(e.totalCoins)),
+                    row('Tuzilgan so\'zlar', fmt(e.totalWords)),
+                    row('Yechilgan misollar', fmt(e.totalMath)),
+                    row('Sertifikatlar', `${fmt(c.letters + c.numbers + c.all)}`, `harflar ${c.letters}, raqamlar ${c.numbers}, hammasi ${c.all}`),
+                    row("Do'kondan xarid qilganlar", fmt(x.shopBuyers)),
+                    row('Kunlik limit qo\'yganlar', fmt(x.dailyLimitUsers)),
+                    row("Tovushni o'chirganlar", fmt(x.soundOff)),
+                    row("Musiqani o'chirganlar", fmt(x.musicOff)),
+                    row('Ovoz mashqini sinaganlar', fmt(x.voiceUsers), x.voiceUsers ? `eng yaxshi natija o'rtacha ${x.avgVoiceBest}%` : ''),
+                    row('Takrorlash mashg\'ulotlari', fmt(x.reviewSessions))
+                ].join('');
+            }
+
+            /* ---------- Jadval ---------- */
+            function rows() {
+                const needle = q.trim().toLowerCase();
+                let list = stats.users;
+                if (needle) {
+                    list = list.filter(u => `${u.id} ${u.authId} ${HEROES[u.hero] || ''} ${AUTH_LABEL[u.authType] || ''}`.toLowerCase().includes(needle));
+                }
+                const col = COLS.find(c => c.key === sort.key);
+                return list.slice().sort((a, b) => {
+                    const x = a[sort.key], y = b[sort.key];
+                    const r = col.type === 'num' ? (x || 0) - (y || 0) : String(x || '').localeCompare(String(y || ''));
+                    return r * sort.dir || String(a.id).localeCompare(String(b.id));
+                });
+            }
+            function renderUsers() {
+                $('#thead').innerHTML = '<tr>' + COLS.map(c => {
+                    const on = sort.key === c.key;
+                    return `<th class="${c.num ? 'num' : ''}" aria-sort="${on ? (sort.dir > 0 ? 'ascending' : 'descending') : 'none'}"><button type="button" data-sort="${c.key}">${esc(c.label)}<span class="car" aria-hidden="true">${on ? (sort.dir > 0 ? '▴' : '▾') : ''}</span></button></th>`;
+                }).join('') + '</tr>';
+
+                const list = rows(), pages = Math.max(1, Math.ceil(list.length / PAGE));
+                page = Math.min(page, pages - 1);
+                const slice = list.slice(page * PAGE, page * PAGE + PAGE);
+
+                $('#tbody').innerHTML = slice.length ? slice.map(u => {
+                    const heroName = HEROES[u.hero];
+                    const auth = u.authType ? `<span title="${AUTH_LABEL[u.authType]}">${u.authType === 'google' ? '✉️' : '📱'} ${esc(u.authId)}</span>` : '<span class="muted">chiqqan</span>';
+                    const chBadges = Array.isArray(u.children) && u.children.length ? u.children.map(c => `
+                        <button type="button" class="btn alt" style="font-size:12px;padding:2px 7px;margin:2px" data-child-info="${esc(JSON.stringify(c))}">
+                            ${c.avatar === 'hadicha' ? '👧' : '👦'} <b>${esc(c.name)}</b> (${c.age || 5}y)
+                        </button>
+                    `).join('') : `<span class="muted">${heroName || '1 bola'}</span>`;
+                    return `<tr><td>${esc(u.id)}</td>
+<td>${heroName ? `<span class="dot" style="background:${HERO_COLOR[u.hero]}"></span>${esc(heroName)}` : '<span class="muted">tanlamagan</span>'}</td>
+<td>${auth}</td>
+<td>${chBadges}</td>
+<td class="num">${u.letters}/${stats.letters.total}<span class="mini"><i style="width:${pct(u.letters, stats.letters.total)}%"></i></span></td>
+<td class="num">${u.digits}/${stats.digits.total}<span class="mini"><i style="width:${pct(u.digits, stats.digits.total)}%"></i></span></td>
+<td class="num">🎈 ${fmt(u.balloonScore || 0)}</td>
+<td class="num">${fmt(u.coins)}</td><td class="num">${esc(fmtMin(u.minutes))}</td><td class="num">${fmt(u.exercises)}</td>
+<td>${esc(fmtWhen(u.lastActive, stats.generatedAt))}</td><td>${esc(fmtDate(u.created))}</td></tr>`;
+                }).join('') : `<tr><td colspan="${COLS.length}" class="empty">${stats.users.length ? 'Qidiruv bo\'yicha hech narsa topilmadi.' : "Hali foydalanuvchi yo'q. Bola ilovaga kirib, mashq qila boshlagach, shu yerda ko'rinadi."}</td></tr>`;
+
+                const from = list.length ? page * PAGE + 1 : 0, to = Math.min(list.length, page * PAGE + PAGE);
+                $('#pageInfo').textContent = `${from}–${to} / ${list.length}`;
+                $('#countInfo').textContent = q ? `Topildi: ${list.length}` : '';
+                $('#prev').disabled = page <= 0;
+                $('#next').disabled = page >= pages - 1;
+
+                const cut = $('#cutNote');
+                if (cut) {
+                    cut.hidden = stats.totals.users <= stats.users.length;
+                    if (!cut.hidden) cut.textContent = `Jadvalda eng so'nggi faol ${fmt(stats.users.length)} ta foydalanuvchi ko'rsatilgan, jami ${fmt(stats.totals.users)} ta.`;
+                }
+            }
+            $('#thead').addEventListener('click', e => {
+                const b = e.target.closest('[data-sort]');
+                if (!b) return;
+                const k = b.dataset.sort;
+                sort = sort.key === k ? { key: k, dir: -sort.dir } : { key: k, dir: COLS.find(c => c.key === k).type === 'num' ? -1 : 1 };
+                page = 0; renderUsers();
+            });
+            $('#q').addEventListener('input', e => { q = e.target.value; page = 0; if (stats) renderUsers(); });
+            $('#prev').addEventListener('click', () => { page--; renderUsers(); });
+            $('#next').addEventListener('click', () => { page++; renderUsers(); });
+
+            /* ---------- SUPER-ADMIN VIEW & CHILD DETAILS ---------- */
+            let superData = null;
+
+            $('#btnAdminView').addEventListener('click', () => {
+                $('#btnAdminView').className = 'btn primary';
+                $('#btnSuperView').className = 'btn ghost';
+                $('#adminPanel').hidden = false;
+                $('#superPanel').hidden = true;
+                if (stats) render();
+            });
+
+            $('#btnSuperView').addEventListener('click', async () => {
+                $('#btnAdminView').className = 'btn ghost';
+                $('#btnSuperView').className = 'btn primary';
+                $('#adminPanel').hidden = true;
+                $('#superPanel').hidden = false;
+                await loadSuperAnalytics();
+            });
+
+            async function loadSuperAnalytics() {
+                try {
+                    const r = await api('/api/superadmin/analytics');
+                    if (r.status === 401) { showLogin(); return; }
+                    if (!r.ok) { $('#stamp').textContent = 'Super-Admin tahlili yuklanmadi'; return; }
+                    superData = r.data;
+                    renderSuperAnalytics();
+                } catch (e) {
+                    $('#stamp').textContent = "Serverga ulanib bo'lmadi";
+                }
+            }
+
+            function renderSuperAnalytics() {
+                if (!superData) return;
+                const tot = superData.totals || {};
+                const avg = superData.averages || {};
+                $('#superBigNum').textContent = fmt(tot.families || 0);
+
+                const item = (label, v) => `<div><dt>${esc(label)}</dt><dd>${v}</dd></div>`;
+                $('#superHeroSide').innerHTML =
+                    item('Jami bolalar profillari', fmt(tot.children || 0)) +
+                    item('Bugun faol bolalar', fmt(tot.activeToday || 0)) +
+                    item("O'rtacha sessiya", fmtMin(avg.minutesPerFamily || 0)) +
+                    item("Oila boshiga bolalar", dec(avg.childrenPerFamily || 1));
+
+                const families = superData.families || [];
+                $('#superTbody').innerHTML = families.length ? families.map(f => {
+                    const authStr = f.authType ? `${f.authType === 'google' ? '✉️' : '📱'} ${esc(f.authId)}` : '<span class="muted">chiqqan</span>';
+                    const chList = (f.children || []).map(c => `
+                        <button type="button" class="btn alt" style="font-size:12px;padding:2px 8px;margin:2px" data-child-info="${esc(JSON.stringify(c))}">
+                            ${c.avatar === 'hadicha' ? '👧' : '👦'} <b>${esc(c.name)}</b> (${c.age || 5}y)
+                        </button>
+                    `).join('');
+                    return `<tr>
+                        <td>${esc(f.id)}</td>
+                        <td>${authStr}</td>
+                        <td class="num"><b>${f.childrenCount || (f.children || []).length}</b></td>
+                        <td>${chList || '<span class="muted">—</span>'}</td>
+                        <td class="num">${esc(fmtMin(f.minutes || 0))}</td>
+                        <td class="num">${f.letters || 0}</td>
+                        <td class="num">🎈 ${f.balloonScore || 0}</td>
+                        <td>${esc(fmtWhen(f.lastActive, superData.generatedAt))}</td>
+                    </tr>`;
+                }).join('') : '<tr><td colspan="8" class="empty">Hali ro\'yxatdan o\'tgan oilalar yo\'q.</td></tr>';
+            }
+
+            window.viewChildObj = function(c) {
+                const modal = $('#childModal');
+                const content = $('#childModalContent');
+                if (!modal || !content) return;
+                modal.style.display = 'flex';
+                const heroName = c.avatar === 'hadicha' ? 'Hadicha' : 'Muhammad';
+                content.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+                        <span style="font-size:54px">${c.avatar === 'hadicha' ? '👧' : '👦'}</span>
+                        <div>
+                            <h2 style="margin:0">${esc(c.name)} (${c.age || 5} yosh)</h2>
+                            <span class="muted">Qahramon: ${heroName}</span>
+                        </div>
+                    </div>
+                    <div class="facts" style="grid-template-columns:1fr 1fr;gap:10px">
+                        <div><dt>Shug'ullanish vaqti:</dt><dd>${esc(fmtMin(Math.round((c.totalSec || 0) / 60)))}</dd></div>
+                        <div><dt>Tangalar:</dt><dd>🪙 ${c.coins || 0}</dd></div>
+                        <div><dt>Tuzilgan so'zlar:</dt><dd>🧩 ${c.words || 0}</dd></div>
+                        <div><dt>Yechilgan misollar:</dt><dd>➕ ${c.math || 0}</dd></div>
+                        <div><dt>Sharlar o'yini rekordi:</dt><dd>🎈 ${c.balloonScore || 0}</dd></div>
+                    </div>
+                    <div style="margin-top:16px">
+                        <b>Kunlik ekran vaqti limiti:</b> ${(c.settings && c.settings.dailyMin) ? c.settings.dailyMin + ' daqiqa' : 'Cheklovsiz'}<br>
+                        <b>Dam olish oralig'i:</b> ${(c.settings && c.settings.breakMin) || 10} daqiqa
+                    </div>
+                `;
+            };
+
+            document.addEventListener('click', e => {
+                const btn = e.target.closest('[data-child-info]');
+                if (!btn) return;
+                try {
+                    const c = JSON.parse(btn.getAttribute('data-child-info'));
+                    window.viewChildObj(c);
+                } catch (_) {}
+            });
+
+            load();
+        })();
+    </script>
+</body>
+
+</html>
