@@ -1,0 +1,2737 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#fff4d6">
+    <meta name="description" content="Bolalar uchun o'zbek ta'lim ilovasi - harflar, raqamlar, so'zlar va o'yinlar">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Zukko Bolajon</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <noscript>Ilovani ishga tushirish uchun JavaScript kerak.</noscript>
+    <div class="ambient-bg" id="ambientBg">
+        <svg class="ambient-cloud" style="top:6%;left:4%;width:130px;animation-duration:45s" viewBox="0 0 100 60"><path d="M20 50 A20 20 0 0 1 40 25 A25 25 0 0 1 75 30 A18 18 0 0 1 90 50 Z" /></svg>
+        <svg class="ambient-cloud" style="top:18%;left:40%;width:170px;animation-duration:65s;animation-delay:-20s" viewBox="0 0 100 60"><path d="M20 50 A20 20 0 0 1 40 25 A25 25 0 0 1 75 30 A18 18 0 0 1 90 50 Z" /></svg>
+        <svg class="ambient-cloud" style="top:12%;left:75%;width:110px;animation-duration:55s;animation-delay:-35s" viewBox="0 0 100 60"><path d="M20 50 A20 20 0 0 1 40 25 A25 25 0 0 1 75 30 A18 18 0 0 1 90 50 Z" /></svg>
+        <svg class="ambient-star" style="top:10%;left:22%;width:18px;height:18px" viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+        <svg class="ambient-star" style="top:25%;left:82%;width:22px;height:22px;animation-delay:1.2s" viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+        <svg class="ambient-star" style="top:65%;left:12%;width:20px;height:20px;animation-delay:2.1s" viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+        <svg class="ambient-star" style="top:78%;left:86%;width:16px;height:16px;animation-delay:0.7s" viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+    </div>
+    <div id="app"></div>
+    <button class="gear" id="gear" data-gear="1" aria-label="settings">⚙️<i></i></button>
+    <div id="ov"></div>
+    <canvas id="fx"></canvas>
+
+    <script>
+        'use strict';
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('SW registered'))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+
+        /* =====================================================================
+           0. YORDAMCHI FUNKSIYALAR
+           ===================================================================== */
+        const $ = (s, r = document) => r.querySelector(s);
+        const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+        const rnd = n => Math.floor(Math.random() * n);
+        const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1);[a[i], a[j]] = [a[j], a[i]]; } return a; };
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        const pickOne = a => a[rnd(a.length)];
+        const dkey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const DEBUG = /[?&]debug\b/.test(location.search);
+
+        /* =====================================================================
+           1. MA'LUMOTLAR
+           ===================================================================== */
+        const LETTERS = [['A', 'Anor', '🍎'], ['B', 'Baliq', '🐟'], ['D', 'Daraxt', '🌳'], ['E', 'Echki', '🐐'], ['F', 'Fil', '🐘'], ['G', 'Gul', '🌸'], ['H', 'Hamster', '🐹'], ['I', 'Ilon', '🐍'], ['J', "Jo'ja", '🐥'], ['K', 'Kitob', '📖'], ['L', 'Limon', '🍋'], ['M', 'Mushuk', '🐱'], ['N', 'Non', '🍞'], ['O', 'Olma', '🍏'], ['P', 'Pomidor', '🍅'], ['Q', "Qo'y", '🐑'], ['R', 'Rasm', '🖼️'], ['S', 'Sut', '🥛'], ['T', 'Tuya', '🐪'], ['U', 'Uzum', '🍇'], ['V', 'Velosiped', '🚲'], ['X', "Xo'roz", '🐓'], ['Y', 'Yulduz', '⭐'], ['Z', 'Zebra', '🦓'], ["O'", "O'rdak", '🦆'], ["G'", "G'oz", '🪿'], ['Sh', 'Shar', '🎈'], ['Ch', 'Choy', '🍵'], ['Ng', 'Tong', '🌅']];
+        const DIGIT_EMO = ['⭕', '🌞', '🐱', '🎈', '🚗', '⭐', '🐝', '🌸', '🍓', '🐞'];
+        const DIGITS = DIGIT_EMO.map((e, i) => [String(i), UZN(i), e]);
+        function UZN(n) { return ['nol', 'bir', 'ikki', 'uch', "to'rt", 'besh', 'olti', 'yetti', 'sakkiz', "to'qqiz"][n]; }
+        const WORDS = [['ANOR', '🍎'], ['NON', '🍞'], ['SUT', '🥛'], ['GUL', '🌸'], ['UY', '🏠'], ['ARI', '🐝'], ['OY', '🌙'], ['BALIQ', '🐟'], ['TUYA', '🐪'], ['LIMON', '🍋'], ['KITOB', '📖'], ['DARAXT', '🌳'], ['FIL', '🐘'], ['ILON', '🐍'], ['ZEBRA', '🦓'], ['MUSHUK', '🐱']];
+        const PRAISE = ['Barakalla!', 'Ofarin!', 'Juda yaxshi!', "Zo'r!", 'Aqlli bola!', 'Ajoyib!'];
+        const BREAK_TXT = "Ofarin! Charchab qolmadingmi? Keling, ozgina o'yin o'ynab dam olamiz!";
+        const RETURN_TXT = "Endi yana darsimizga qaytamizmi? Yangi harflar bizni kutyapti!";
+
+        // Ranglar ma'lumotlari
+        const COLORS = [
+            ['Qizil', '🔴', '#ef4444', ['🍎', '🌹', '❤️', '🚗']],
+            ['Sariq', '🟡', '#f59e0b', ['🌞', '🍋', '⭐', '🍌']],
+            ['Ko\'k', '🔵', '#3b82f6', ['🌊', '🐳', '🫐', '👔']],
+            ['Yashil', '🟢', '#22c55e', ['🌿', '🌲', '🐸', '🥒']],
+            ['Oq', '⚪', '#ffffff', ['☁️', '🐰', '🥛', '❄️']],
+            ['Qora', '⚫', '#1f2937', ['🌑', '🐈‍⬛', '🎩', '👟']],
+            ['Binafsha', '🟣', '#a855f7', ['🍇', '🍆', '🔮', '💐']],
+            ['Pushti', '💗', '#ec4899', ['🌸', '🎀', '🐷', '🦩']]
+        ];
+
+        // Sanash uchun rasmlar
+        const COUNT_ITEMS = ['🍎', '🐱', '⭐', '🌸', '🐟', '🚗', '🎈', '🐝', '🍋', '📚', '🐦', '🌻'];
+
+        const ITEMS = [
+            { id: 'h_d1', cat: 'hat', price: 0, dop: ['#1f2937', '#ffffff'] },
+            { id: 'h_d2', cat: 'hat', price: 10, dop: ['#1d4ed8', '#fde68a'] },
+            { id: 'h_d3', cat: 'hat', price: 10, dop: ['#b91c1c', '#fde68a'] },
+            { id: 'h_d4', cat: 'hat', price: 12, dop: ['#047857', '#ffffff'] },
+            { id: 'h_cap', cat: 'hat', price: 15, e: '🧢', s: 66, y: 80 },
+            { id: 'h_top', cat: 'hat', price: 20, e: '🎩', s: 66, y: 74 },
+            { id: 'h_crown', cat: 'hat', price: 30, e: '👑', s: 60, y: 72 },
+            { id: 'g_round', cat: 'glasses', price: 12, kind: 'round' },
+            { id: 'g_sun', cat: 'glasses', price: 18, kind: 'sun' },
+            { id: 'g_heart', cat: 'glasses', price: 25, kind: 'heart' },
+            { id: 'a_bow', cat: 'acc', price: 8, e: '🎀', s: 40, x: 100, y: 160 },
+            { id: 'a_scarf', cat: 'acc', price: 12, kind: 'scarf' },
+            { id: 'a_medal', cat: 'acc', price: 20, e: '🏅', s: 38, x: 100, y: 190 },
+            { id: 'a_flower', cat: 'acc', price: 10, e: '🌸', s: 32, x: 140, y: 78 },
+            { id: 'o_m1', cat: 'outfit', hero: 'muhammad', price: 0, col: ['#2563eb', '#93c5fd'] },
+            { id: 'o_m2', cat: 'outfit', hero: 'muhammad', price: 12, col: ['#059669', '#6ee7b7'] },
+            { id: 'o_m3', cat: 'outfit', hero: 'muhammad', price: 12, col: ['#dc2626', '#fca5a5'] },
+            { id: 'o_m4', cat: 'outfit', hero: 'muhammad', price: 15, col: ['#d97706', '#fde68a'] },
+            { id: 'o_h1', cat: 'outfit', hero: 'hadicha', price: 0, col: ['#ec4899', '#fbcfe8'] },
+            { id: 'o_h2', cat: 'outfit', hero: 'hadicha', price: 12, col: ['#7c3aed', '#ddd6fe'] },
+            { id: 'o_h3', cat: 'outfit', hero: 'hadicha', price: 12, col: ['#0891b2', '#a5f3fc'] },
+            { id: 'o_h4', cat: 'outfit', hero: 'hadicha', price: 15, col: ['#dc2626', '#fecaca'] },
+        ];
+        const ITEM = Object.fromEntries(ITEMS.map(i => [i.id, i]));
+        const CATS = [['hat', '🎩'], ['glasses', '🕶️'], ['outfit', '👕'], ['acc', '🎀']];
+
+        /* =====================================================================
+           2. SAQLANADIGAN HOLAT
+           ===================================================================== */
+        const LS = 'zukko_bolajon_v4';
+        const SYNC_KEY = 'zb_synced_at';
+        const DIRTY_KEY = 'zb_dirty';
+        const UID_RE = /^[A-Za-z0-9_-]{8,64}$/;
+        const newUid = () => { const b = new Uint8Array(16); crypto.getRandomValues(b); return [...b].map(x => x.toString(16).padStart(2, '0')).join(''); };
+        const UID = (() => {
+            try {
+                let id = localStorage.getItem('zb_uid');
+                if (!id || !UID_RE.test(id)) { id = newUid(); localStorage.setItem('zb_uid', id); }
+                return id;
+            } catch (e) { return null; }
+        })();
+        function defaults() {
+            return {
+                auth: null, hero: null, coins: 0, prog: {}, words: 0, math: 0,
+                owned: ['h_d1', 'o_m1', 'o_h1'],
+                equip: { muhammad: { hat: 'h_d1', glasses: null, outfit: 'o_m1', acc: null }, hadicha: { hat: null, glasses: null, outfit: 'o_h1', acc: null } },
+                days: {}, totalSec: 0,
+                settings: { breakMin: 10, gameMin: 5, dailyMin: 0, sound: true, music: true, monochrome: false },
+                voiceRecords: {},
+                colorsProg: {},
+                reviewHistory: {},
+                certificates: [],
+                children: [],
+                activeChildId: null,
+                parentPin: '1234',
+                pinRecovery: null,
+                letterAnalytics: {}
+            };
+        }
+
+        function createDefaultChild(name, hero, age = 6) {
+            return {
+                id: 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
+                name: name || (hero === 'hadicha' ? 'Hadicha' : 'Muhammad'),
+                avatar: hero || 'muhammad',
+                hero: hero || 'muhammad',
+                age: Number(age) || 6,
+                coins: 0,
+                prog: {},
+                words: 0,
+                math: 0,
+                owned: ['h_d1', 'o_m1', 'o_h1'],
+                equip: { muhammad: { hat: 'h_d1', glasses: null, outfit: 'o_m1', acc: null }, hadicha: { hat: null, glasses: null, outfit: 'o_h1', acc: null } },
+                days: {},
+                totalSec: 0,
+                settings: { breakMin: 10, gameMin: 5, dailyMin: 0, sound: true, music: true, monochrome: false },
+                voiceRecords: {},
+                colorsProg: {},
+                reviewHistory: {},
+                certificates: [],
+                balloonScore: 0,
+                letterAnalytics: {}
+            };
+        }
+
+        function getActiveChild() {
+            if (!Array.isArray(S.children) || !S.children.length) {
+                const def = createDefaultChild(S.hero === 'hadicha' ? 'Hadicha' : 'Muhammad', S.hero || 'muhammad');
+                S.children = [def];
+                S.activeChildId = def.id;
+                try { sessionStorage.setItem('zb_active_child', def.id); } catch (_) {}
+                return def;
+            }
+            let activeId = S.activeChildId;
+            try {
+                const sess = sessionStorage.getItem('zb_active_child');
+                if (sess && S.children.some(c => c.id === sess)) activeId = sess;
+            } catch (_) {}
+            let ch = S.children.find(c => c.id === activeId);
+            if (!ch) {
+                ch = S.children[0];
+                S.activeChildId = ch.id;
+            }
+            return ch;
+        }
+
+        function syncActiveChild() {
+            const ch = getActiveChild();
+            if (!ch) return;
+            S.hero = ch.avatar || ch.hero || 'muhammad';
+            S.coins = ch.coins || 0;
+            S.prog = ch.prog || {};
+            S.words = ch.words || 0;
+            S.math = ch.math || 0;
+            S.owned = ch.owned || ['h_d1', 'o_m1', 'o_h1'];
+            S.equip = ch.equip || { muhammad: { hat: 'h_d1', glasses: null, outfit: 'o_m1', acc: null }, hadicha: { hat: null, glasses: null, outfit: 'o_h1', acc: null } };
+            S.days = ch.days || {};
+            S.totalSec = ch.totalSec || 0;
+            if (ch.settings) S.settings = Object.assign(S.settings || {}, ch.settings);
+            document.body.classList.toggle('monochrome', !!(S.settings && S.settings.monochrome));
+            S.voiceRecords = ch.voiceRecords || {};
+            S.colorsProg = ch.colorsProg || {};
+            S.reviewHistory = ch.reviewHistory || {};
+            S.certificates = ch.certificates || [];
+            S.letterAnalytics = ch.letterAnalytics || {};
+        }
+
+        function commitActiveChild() {
+            const ch = getActiveChild();
+            if (!ch) return;
+            ch.hero = S.hero;
+            ch.avatar = S.hero;
+            ch.coins = S.coins;
+            ch.prog = S.prog;
+            ch.words = S.words;
+            ch.math = S.math;
+            ch.owned = S.owned;
+            ch.equip = S.equip;
+            ch.days = S.days;
+            ch.totalSec = S.totalSec;
+            ch.settings = S.settings;
+            ch.voiceRecords = S.voiceRecords;
+            ch.colorsProg = S.colorsProg;
+            ch.reviewHistory = S.reviewHistory;
+            ch.certificates = S.certificates;
+            ch.letterAnalytics = S.letterAnalytics || {};
+        }
+
+        async function switchActiveChild(id) {
+            const ch = S.children.find(c => c.id === id);
+            if (!ch) return;
+            commitActiveChild();
+            S.activeChildId = id;
+            try { sessionStorage.setItem('zb_active_child', id); } catch (_) {}
+            syncActiveChild();
+            save();
+            if (UID) {
+                try {
+                    await fetch(`/api/children/${id}/switch`, {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({ uid: UID })
+                    });
+                } catch (_) {}
+            }
+            snd.giggle();
+            confetti(60);
+            say(`Salom, ${ch.name}! Qani, birgalikda o'rganamiz!`);
+            render();
+        }
+
+        function load() {
+            const d = defaults();
+            try {
+                const r = JSON.parse(localStorage.getItem(LS) || 'null');
+                if (r) {
+                    Object.assign(d, r);
+                    d.settings = Object.assign(defaults().settings, r.settings || {});
+                    if (Array.isArray(r.children) && r.children.length) {
+                        d.children = r.children;
+                    }
+                }
+            } catch (e) { }
+            return d;
+        }
+        const S = load();
+        if (S.hero && (!S.children || !S.children.length)) {
+            const initChild = createDefaultChild(S.hero === 'hadicha' ? 'Hadicha' : 'Muhammad', S.hero);
+            initChild.coins = S.coins;
+            initChild.prog = S.prog;
+            initChild.days = S.days;
+            initChild.totalSec = S.totalSec;
+            S.children = [initChild];
+            S.activeChildId = initChild.id;
+        }
+        syncActiveChild();
+
+        let lastSaved = '';
+        function save() {
+            commitActiveChild();
+            const json = JSON.stringify(S);
+            if (json === lastSaved) return;
+            lastSaved = json;
+            try { localStorage.setItem(LS, json); } catch (e) { }
+            markDirty();
+        }
+        let pushTimer = null;
+        function markDirty() {
+            if (!UID) return;
+            try { localStorage.setItem(DIRTY_KEY, '1'); } catch (e) { }
+            clearTimeout(pushTimer);
+            pushTimer = setTimeout(pushState, 800);
+        }
+        // Serverga to'liq pochta/telefon yuborilmaydi, faqat yashirin ko'rinishi (al***@gmail.com, ***4567)
+        function maskId(type, id) {
+            const v = String(id == null ? '' : id).trim();
+            if (!v) return '';
+            if (v.includes('*')) return v.slice(0, 80);
+            if (type === 'phone') { const d = v.replace(/\D/g, ''); return d.length > 4 ? '***' + d.slice(-4) : '***'; }
+            const at = v.indexOf('@');
+            if (at < 1) return v.slice(0, 2) + '***';
+            return v.slice(0, Math.min(2, at)) + '***' + v.slice(at);
+        }
+        function pickState() {
+            commitActiveChild();
+            const out = {};
+            Object.keys(defaults()).forEach(k => { if (k in S) out[k] = S[k]; });
+            if (out.auth) out.auth = { type: out.auth.type, id: maskId(out.auth.type, out.auth.id) };
+            return out;
+        }
+        async function pushState(keepalive = false) {
+            if (!UID) return;
+            clearTimeout(pushTimer);
+            const state = pickState();
+            const snap = JSON.stringify(state);
+            try {
+                const r = await fetch(`/api/state/${UID}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ state }), keepalive });
+                if (!r.ok) return;
+                const { updatedAt } = await r.json();
+                localStorage.setItem(SYNC_KEY, String(updatedAt));
+                if (JSON.stringify(pickState()) === snap) localStorage.removeItem(DIRTY_KEY);
+                else markDirty();
+            } catch (e) { }
+        }
+        async function syncFromServer() {
+            if (!UID) return;
+            const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 2000);
+            try {
+                const r = await fetch(`/api/state/${UID}`, { signal: ctl.signal });
+                if (r.status === 404) { if (S.auth) markDirty(); return; }
+                if (!r.ok) return;
+                const doc = await r.json();
+                const pending = localStorage.getItem(DIRTY_KEY) === '1';
+                if (pending || doc.updatedAt <= (Number(localStorage.getItem(SYNC_KEY)) || 0)) return;
+                const incoming = doc.state || {};
+                const fresh = Object.assign(defaults(), incoming);
+                fresh.settings = Object.assign(defaults().settings, incoming.settings || {});
+                if (S.auth) fresh.auth = S.auth;
+                if (Array.isArray(incoming.children) && incoming.children.length) {
+                    fresh.children = incoming.children;
+                    fresh.activeChildId = incoming.activeChildId || incoming.children[0].id;
+                }
+                Object.keys(S).forEach(k => delete S[k]);
+                Object.assign(S, fresh);
+                syncActiveChild();
+                lastSaved = JSON.stringify(S);
+                localStorage.setItem(LS, lastSaved);
+                localStorage.setItem(SYNC_KEY, String(doc.updatedAt));
+            } catch (e) { } finally { clearTimeout(to); }
+        }
+        const day = () => { const k = dkey(); return S.days[k] || (S.days[k] = { sec: 0, ex: 0, lessons: 0 }); };
+        const rt = { scr: 'auth', p: {}, lastIn: Date.now(), studySec: 0, exSince: 0, gameSec: 0, retShown: false, limitShown: false, drawing: false, ov: false, timers: [], tick: 0, greeted: false, cat: 'hat' };
+        const later = (fn, ms) => { const t = setTimeout(() => { rt.timers = rt.timers.filter(x => x !== t); fn(); }, ms); rt.timers.push(t); return t; };
+        const idOf = (kind, i) => kind + i;
+        const progOf = id => S.prog[id] || 0;
+        const allDone = () => LETTERS.every((_, i) => progOf('L' + i) === 3) && DIGITS.every((_, i) => progOf('N' + i) === 3);
+        const pct = k => { const arr = k === 'L' ? LETTERS : DIGITS; return Math.round(arr.reduce((s, _, i) => s + progOf(k + i), 0) / (arr.length * 3) * 100); };
+
+        /* =====================================================================
+           3. TOVUSH DVIGATELI & GLOBAL AUDIO
+           ===================================================================== */
+        class Snd {
+            constructor() { this.ctx = null; this.timer = null; this.n = 0; this.i = 3; }
+            get globalMuted() {
+                return !S.settings.sound && !S.settings.music;
+            }
+            toggleMute() {
+                const nowMuted = !this.globalMuted;
+                S.settings.sound = !nowMuted;
+                S.settings.music = !nowMuted;
+                if (nowMuted) {
+                    if ('speechSynthesis' in window) speechSynthesis.cancel();
+                    if (this.master) this.master.gain.value = 0.0001;
+                } else {
+                    if (this.master) this.master.gain.value = 0.85;
+                    this.init();
+                }
+                this.sync();
+                save();
+                this.updateButtons();
+                if (!nowMuted) {
+                    this.pop();
+                    say("Tovush yoqildi!");
+                }
+            }
+            updateButtons() {
+                $$('[data-a="toggleAudio"]').forEach(btn => {
+                    btn.classList.toggle('muted', this.globalMuted);
+                    btn.textContent = this.globalMuted ? '🔇' : '🔊';
+                });
+            }
+            init() {
+                if (!this.ctx) {
+                    const A = window.AudioContext || window.webkitAudioContext; if (!A) return;
+                    try { this.ctx = new A(); } catch (e) { return; }
+                    const c = this.ctx; this.master = c.createGain(); this.master.gain.value = this.globalMuted ? 0.0001 : .85; this.master.connect(c.destination);
+                    this.mus = c.createGain(); this.mus.gain.value = .07;
+                    this.dly = c.createDelay(1); this.dly.delayTime.value = .34; const fb = c.createGain(); fb.gain.value = .4;
+                    this.dly.connect(fb); fb.connect(this.dly); this.mus.connect(this.master); this.mus.connect(this.dly); this.dly.connect(this.master);
+                }
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                this.sync();
+            }
+            tone(f, d = .2, type = 'sine', v = .2, t0 = 0, dest) {
+                if (this.globalMuted || !S.settings.sound || !this.ctx) return;
+                const c = this.ctx, t = c.currentTime + t0, o = c.createOscillator(), g = c.createGain();
+                o.type = type; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(.0001, t);
+                g.gain.exponentialRampToValueAtTime(v, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+                o.connect(g); g.connect(dest || this.master); o.start(t); o.stop(t + d + .05);
+            }
+            click() { this.tone(620, .09, 'sine', .12); }
+            pop() { this.tone(900, .08, 'triangle', .2); this.tone(1300, .07, 'sine', .12, .03); }
+            coin() { this.tone(988, .1, 'square', .07); this.tone(1319, .3, 'square', .07, .09); }
+            success() { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, .28, 'triangle', .18, i * .09)); }
+            wrong() { this.tone(330, .22, 'sine', .18); this.tone(247, .3, 'sine', .18, .16); }
+            whoosh() { this.tone(300, .25, 'sawtooth', .04); this.tone(600, .2, 'sine', .05, .08); }
+            giggle() { [700, 880, 780, 990].forEach((f, i) => this.tone(f, .1, 'triangle', .14, i * .07)); }
+            speak(t) {
+                if (this.globalMuted || !S.settings.sound || !('speechSynthesis' in window)) return;
+                try {
+                    speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'uz-UZ'; u.rate = .9; u.pitch = 1.3;
+                    const v = speechSynthesis.getVoices(); const vo = v.find(x => x.lang && x.lang.toLowerCase().startsWith('uz')) || v.find(x => x.lang && x.lang.toLowerCase().startsWith('tr'));
+                    if (vo) u.voice = vo; speechSynthesis.speak(u);
+                } catch (e) { }
+            }
+            sync() {
+                const on = !this.globalMuted && S.settings.music && S.settings.sound && this.ctx && !document.hidden;
+                if (on && !this.timer) { this.timer = setInterval(() => this.note(), 640); }
+                if (!on && this.timer) { clearInterval(this.timer); this.timer = null; }
+            }
+            note() {
+                const P = [261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3];
+                this.n++; this.i = Math.max(0, Math.min(P.length - 1, this.i + pickOne([-2, -1, -1, 0, 1, 1, 2])));
+                if (Math.random() < .72) this.tone(P[this.i], 1.3, 'triangle', .5, 0, this.mus);
+                if (this.n % 8 === 1) { this.tone(130.8, 3, 'sine', .9, 0, this.mus); this.tone(196, 3, 'sine', .5, 0, this.mus); }
+            }
+        }
+        const snd = new Snd();
+        const say = t => snd.speak(t);
+        if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => { };
+
+        /* =====================================================================
+           3.1 OVOZ YOZISH TIZIMI
+           ===================================================================== */
+        let VR = null;
+        // Ovozni tanish brauzerning SpeechRecognition xizmati bilan ishlaydi (mikrofon bitta, shuning uchun alohida yozib olish yo'q).
+        const CYR = { 'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'j', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'x', 'ц': 's', 'ч': 'ch', 'ш': 'sh', 'щ': 'sh', 'ъ': '', 'ы': 'i', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya', 'ў': 'o', 'қ': 'q', 'ғ': 'g', 'ҳ': 'h' };
+        // Kichik harf, kirill -> lotin, tutuq belgilari va bo'shliqlarsiz
+        const normSpeech = t => String(t || '').toLowerCase().replace(/[\u0400-\u04ff]/g, c => (c in CYR ? CYR[c] : '')).replace(/[ʻʼ’‘`'´]/g, '').replace(/[^a-z0-9]/g, '');
+        class VoiceRecorder {
+            constructor() { this.rec = null; this.listening = false; this.cancelled = false; this.timer = null; }
+            get supported() { return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+
+            /** Bola gapirishi bilan tinglaydi va eshitilgan so'zni `targets` ro'yxatiga solishtiradi. */
+            listen(targets, maxMs = 7000) {
+                return new Promise(resolve => {
+                    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    const rec = new SR();
+                    rec.lang = 'uz-UZ'; rec.continuous = false; rec.interimResults = false; rec.maxAlternatives = 3;
+                    const result = { score: 0, recognized: '', error: null, cancelled: false };
+                    this.rec = rec; this.listening = true; this.cancelled = false;
+
+                    rec.onresult = e => {
+                        const first = e.results && e.results[0]; if (!first) return;
+                        let best = -1;
+                        for (let i = 0; i < first.length; i++) {
+                            const heard = normSpeech(first[i].transcript);
+                            const sc = Math.max(...targets.map(t => Math.round(this.calculateSimilarity(heard, normSpeech(t)) * 100)));
+                            if (sc > best) { best = sc; result.recognized = first[i].transcript; }
+                        }
+                        result.score = Math.max(0, best);
+                    };
+                    rec.onerror = e => { result.error = (e && e.error) || 'error'; };
+                    rec.onend = () => {
+                        clearTimeout(this.timer); this.listening = false; result.cancelled = this.cancelled; resolve(result);
+                    };
+                    try { rec.start(); } catch (e) { result.error = 'start'; this.listening = false; resolve(result); return; }
+                    this.timer = setTimeout(() => { try { rec.stop(); } catch (_) { } }, maxMs);
+                });
+            }
+            stop() { try { if (this.rec) this.rec.stop(); } catch (_) { } }
+            cancel() { this.cancelled = true; try { if (this.rec) this.rec.abort(); } catch (_) { } }
+
+            /** Levenshtein masofasi asosida 0..1 oralig'idagi o'xshashlik. */
+            calculateSimilarity(a, b) {
+                if (a === b) return a ? 1 : 0;
+                if (!a.length || !b.length) return 0;
+                let prev = Array.from({ length: a.length + 1 }, (_, j) => j);
+                for (let i = 1; i <= b.length; i++) {
+                    const cur = [i];
+                    for (let j = 1; j <= a.length; j++) cur[j] = Math.min(prev[j - 1] + (b[i - 1] === a[j - 1] ? 0 : 1), cur[j - 1] + 1, prev[j] + 1);
+                    prev = cur;
+                }
+                return 1 - prev[a.length] / Math.max(a.length, b.length);
+            }
+        }
+
+        
+        /* =====================================================================
+           3.2 JONLI HAMROH (COMPANION WIDGET)
+           ===================================================================== */
+        const COMPANION_PHRASES = {
+            greet: ["Salom! Qani, birgalikda o'rganamiz! 🚀", "Bugun qanday yangi bilimlarni olamiz? ✨", "Men sen bilan birgaman! 😊"],
+            cheer: ["Ofarin, zukko bolajon! 🎉", "Barakalla! Juda ajoyib chiqdi! ⭐", "Sen juda aqllisan! 👏", "Zo'r natija! Davom etamiz! 🌟"],
+            comfort: ["Hechqisi yo'q, xafa bo'lma! Yana urinib ko'ramiz! 🌸", "Birgalikda albatta uddalaymiz! 💪", "Shoshilmasdan, diqqat bilan qilamiz! ✨"],
+            hint: ["Ekranga diqqat bilan qara! 💡", "Yashil strelka bo'yicha chiz! ✏️", "Baland ovozda gapir! 🎤"]
+        };
+
+        function setCompanionSpeech(text, mood = 'happy', autoHideMs = 4500) {
+            rt.companionText = text;
+            rt.companionMood = mood;
+            const b = $('#companionBubble');
+            if (b) {
+                b.textContent = text;
+                b.style.display = 'block';
+                b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+            }
+            const av = $('#companionAvatar');
+            if (av && S.hero) {
+                av.innerHTML = heroSVG(S.hero, mood);
+            }
+            clearTimeout(rt.companionTimer);
+            if (autoHideMs > 0) {
+                rt.companionTimer = setTimeout(() => {
+                    const b2 = $('#companionBubble');
+                    if (b2) b2.style.display = 'none';
+                    if (av && S.hero) av.innerHTML = heroSVG(S.hero, 'happy');
+                }, autoHideMs);
+            }
+        }
+
+        function updateCompanionWidget() {
+            let comp = $('#companionWidget');
+            const show = !['auth', 'pick', 'parent'].includes(rt.scr);
+            if (!show) {
+                if (comp) comp.style.display = 'none';
+                return;
+            }
+            if (!comp) {
+                comp = document.createElement('div');
+                comp.id = 'companionWidget';
+                comp.className = 'companion-widget';
+                comp.setAttribute('data-a', 'companionTap');
+                comp.setAttribute('title', "Menga bosing!");
+                document.body.appendChild(comp);
+            }
+            comp.style.display = 'flex';
+            const h = S.hero || 'muhammad';
+            const defaultText = h === 'hadicha' ? "Hadicha: Men yoningdaman! 🌸" : "Muhammad: Men yoningdaman! 🚀";
+            const text = rt.companionText || defaultText;
+            comp.innerHTML = `
+                <div class="companion-speech" id="companionBubble">${esc(text)}</div>
+                <div class="companion-mini-body" id="companionAvatar">${heroSVG(h, rt.companionMood || 'happy')}</div>
+            `;
+        }
+
+        /* =====================================================================
+           4. QAHRAMONLAR (SVG)
+           ===================================================================== */
+        let _u = 0;
+        function doppi(c) {
+            return `<path d="M58 84 Q54 38 100 32 Q146 38 142 84 Q100 72 58 84Z" fill="${c[0]}"/><path d="M58 84 Q100 72 142 84 L143 91 Q100 80 57 91Z" fill="${c[1]}"/><g fill="${c[1]}"><path d="M100 42 l6 10 -6 10 -6 -10z"/><path d="M76 54 l5 8 -5 8 -5 -8z"/><path d="M124 54 l5 8 -5 8 -5 -8z"/></g>`;
+        }
+        function heroSVG(h, mood = 'happy', eq) {
+            eq = eq || S.equip[h]; const girl = h === 'hadicha', id = 'cp' + (++_u);
+            const o = ITEM[eq.outfit] || ITEM[girl ? 'o_h1' : 'o_m1']; const [c1, c2] = o.col; const skin = '#f6c9a3', hair = '#2b1b12';
+            const body = girl ? 'M42 262 Q54 152 100 142 Q146 152 158 262Z' : 'M54 262 Q50 154 100 142 Q150 154 146 262Z';
+            let s = `<svg class="hsvg" viewBox="0 0 200 270" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="${id}"><path d="${body}"/></clipPath></defs>`;
+            s += `<ellipse cx="100" cy="265" rx="62" ry="6" fill="rgba(0,0,0,.12)"/>`;
+            if (girl) s += `<ellipse cx="60" cy="150" rx="12" ry="42" fill="${hair}" transform="rotate(10 60 150)"/><ellipse cx="140" cy="150" rx="12" ry="42" fill="${hair}" transform="rotate(-10 140 150)"/><circle cx="56" cy="190" r="8" fill="#ec4899"/><circle cx="144" cy="190" r="8" fill="#ec4899"/>`;
+            s += `<ellipse cx="42" cy="205" rx="14" ry="38" fill="${c1}" transform="rotate(8 42 205)"/><ellipse cx="158" cy="205" rx="14" ry="38" fill="${c1}" transform="rotate(-8 158 205)"/><circle cx="38" cy="243" r="10" fill="${skin}"/><circle cx="162" cy="243" r="10" fill="${skin}"/>`;
+            s += `<path d="${body}" fill="${c1}"/><g clip-path="url(#${id})" fill="none" stroke="${c2}" stroke-width="9" opacity=".55">`;
+            for (const x of [48, 66, 84, 102, 120, 138, 156]) s += girl ? `<path d="M${x} 142 q9 30 0 60 t0 60 t0 20"/>` : (x % 36 === 12 || x === 66 || x === 138 ? `<path d="M${x} 142 L${x} 265"/>` : '');
+            s += `</g>`;
+            if (!girl) s += `<rect x="54" y="196" width="92" height="13" fill="#fbbf24"/><rect x="92" y="193" width="16" height="19" rx="3" fill="#f59e0b"/><path d="M100 144 L96 262" stroke="rgba(0,0,0,.18)" stroke-width="3" fill="none"/>`;
+            else s += `<path d="M70 190 Q100 204 130 190" stroke="${c2}" stroke-width="8" fill="none" stroke-linecap="round"/>`;
+            s += `<rect x="90" y="126" width="20" height="22" fill="${skin}"/><path d="M82 142 L100 160 L118 142Z" fill="${c2}"/>`;
+            if (eq.acc === 'a_scarf') s += `<path d="M70 138 Q100 162 130 138 L128 154 Q100 178 72 154Z" fill="#ef4444"/><rect x="108" y="150" width="14" height="36" rx="5" fill="#dc2626"/>`;
+            s += `<circle cx="58" cy="100" r="9" fill="${skin}"/><circle cx="142" cy="100" r="9" fill="${skin}"/><circle cx="100" cy="96" r="42" fill="${skin}"/>`;
+            s += `<path d="M57 98 Q54 50 100 48 Q146 50 143 98 Q133 76 100 74 Q67 76 57 98Z" fill="${hair}"/>`;
+            if (girl) s += `<path d="M100 74 Q86 80 72 92 Q90 78 100 74Z" fill="${hair}"/>`;
+            s += `<g class="eyes"><ellipse cx="84" cy="100" rx="5.5" ry="7" fill="${hair}"/><ellipse cx="116" cy="100" rx="5.5" ry="7" fill="${hair}"/><circle cx="86" cy="97" r="2" fill="#fff"/><circle cx="118" cy="97" r="2" fill="#fff"/></g>`;
+            if (mood === 'sad') s += `<path d="M74 86 L92 91 M126 86 L108 91" stroke="${hair}" stroke-width="3" stroke-linecap="round"/>`;
+            s += `<circle cx="71" cy="114" r="7" fill="#ff8fa3" opacity=".5"/><circle cx="129" cy="114" r="7" fill="#ff8fa3" opacity=".5"/>`;
+            if (mood === 'sad') s += `<path d="M88 124 Q100 112 112 124" stroke="#b4443f" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+            else if (mood === 'cheer') s += `<path d="M82 113 Q100 138 118 113Z" fill="#b4443f"/><path d="M92 122 Q100 130 108 122Z" fill="#ff8fa3"/>`;
+            else s += `<path d="M86 116 Q100 129 114 116" stroke="#b4443f" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+            const g = ITEM[eq.glasses];
+            if (g) {
+                if (g.kind === 'round') s += `<g fill="rgba(255,255,255,.25)" stroke="#334155" stroke-width="3.5"><circle cx="84" cy="100" r="13"/><circle cx="116" cy="100" r="13"/></g><path d="M97 100 h6" stroke="#334155" stroke-width="3.5"/>`;
+                if (g.kind === 'sun') s += `<g fill="#111827"><rect x="68" y="89" width="30" height="22" rx="9"/><rect x="102" y="89" width="30" height="22" rx="9"/></g><path d="M98 97 h4" stroke="#111827" stroke-width="3"/><path d="M74 94 h8" stroke="#fff" opacity=".5" stroke-width="3"/>`;
+                if (g.kind === 'heart') s += `<text x="84" y="111" font-size="30" text-anchor="middle">❤️</text><text x="116" y="111" font-size="30" text-anchor="middle">❤️</text>`;
+            }
+            const a = ITEM[eq.acc]; if (a && a.e) s += `<text x="${a.x}" y="${a.y}" font-size="${a.s}" text-anchor="middle">${a.e}</text>`;
+            const hat = ITEM[eq.hat];
+            if (hat) { s += hat.dop ? doppi(hat.dop) : `<text x="100" y="${hat.y}" font-size="${hat.s}" text-anchor="middle">${hat.e}</text>`; }
+            return s + '</svg>';
+        }
+        function itemIcon(it) {
+            if (it.cat === 'hat') return it.dop ? `<svg viewBox="40 24 120 72">${doppi(it.dop)}</svg>` : it.e;
+            if (it.cat === 'glasses') {
+                if (it.kind === 'round') return `<svg viewBox="60 80 80 40"><g fill="rgba(255,255,255,.4)" stroke="#334155" stroke-width="4"><circle cx="84" cy="100" r="14"/><circle cx="116" cy="100" r="14"/></g><path d="M98 100 h4" stroke="#334155" stroke-width="4"/></svg>`;
+                if (it.kind === 'sun') return `<svg viewBox="60 80 80 40"><g fill="#111827"><rect x="66" y="88" width="32" height="24" rx="10"/><rect x="102" y="88" width="32" height="24" rx="10"/></g></svg>`;
+                return '😍';
+            }
+            if (it.cat === 'outfit') return `<div class="sw" style="background:linear-gradient(90deg,${it.col[0]} 0 50%,${it.col[1]} 50%)"></div>`;
+            if (it.kind === 'scarf') return '🧣'; return it.e;
+        }
+
+        /* =====================================================================
+           5. EFFEKTLAR
+           ===================================================================== */
+        const fx = { c: null, x: null, p: [], on: false };
+        function fxInit() { fx.c = $('#fx'); fx.x = fx.c.getContext('2d'); const f = () => { fx.c.width = innerWidth; fx.c.height = innerHeight; }; f(); addEventListener('resize', f); }
+        function confetti(n = 70, x = innerWidth / 2, y = innerHeight / 2) {
+            const cols = ['#ff6b6b', '#ffd166', '#06d6a0', '#4cc9f0', '#a78bfa', '#f472b6'];
+            for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, s = 4 + Math.random() * 9; fx.p.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 6, r: 4 + Math.random() * 6, c: pickOne(cols), l: 70 + Math.random() * 40, rot: Math.random() * 6 }); }
+            if (!fx.on) { fx.on = true; requestAnimationFrame(fxLoop); }
+        }
+        function fxLoop() {
+            const { x, c } = fx; x.clearRect(0, 0, c.width, c.height);
+            fx.p = fx.p.filter(p => p.l-- > 0);
+            for (const p of fx.p) { p.x += p.vx; p.y += p.vy; p.vy += .35; p.vx *= .99; p.rot += .2; x.save(); x.translate(p.x, p.y); x.rotate(p.rot); x.fillStyle = p.c; x.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); x.restore(); }
+            if (fx.p.length) requestAnimationFrame(fxLoop); else { fx.on = false; x.clearRect(0, 0, c.width, c.height); }
+        }
+        function coins(n, fromEl) {
+            S.coins += n; save(); snd.coin();
+            const dst = $('#coinN'), src = fromEl && fromEl.getBoundingClientRect ? fromEl.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight / 2, width: 0, height: 0 };
+            const d = dst ? dst.getBoundingClientRect() : { left: 60, top: 20 };
+            for (let i = 0; i < Math.min(n, 5); i++) {
+                const el = document.createElement('div'); el.className = 'fly'; el.textContent = '🪙'; el.style.left = (src.left + src.width / 2) + 'px'; el.style.top = (src.top + src.height / 2) + 'px'; document.body.appendChild(el);
+                const a = el.animate([{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${(Math.random() - .5) * 80}px,-70px) scale(1.5)`, offset: .35 }, { transform: `translate(${d.left - src.left - src.width / 2}px,${d.top - src.top - src.height / 2}px) scale(.8)` }], { duration: 900 + i * 120, easing: 'ease-in', delay: i * 90 });
+                a.onfinish = () => { el.remove(); const c = $('#coinN'); if (c) c.textContent = S.coins; };
+            }
+            setTimeout(() => { const c = $('#coinN'); if (c) c.textContent = S.coins; }, 1400);
+        }
+        function react(m, ms = 1700) {
+            const el = $('#heroMini') || $('#heroBig'); if (!el || !S.hero) return;
+            el.innerHTML = heroSVG(S.hero, m); el.classList.remove('jump', 'shake'); void el.offsetWidth; el.classList.add(m === 'sad' ? 'shake' : 'jump');
+            clearTimeout(react.t); react.t = setTimeout(() => { if (el.isConnected) { el.innerHTML = heroSVG(S.hero, 'happy'); el.classList.remove('jump', 'shake'); } }, ms);
+        }
+
+        /* =====================================================================
+           6. OVERLAY
+           ===================================================================== */
+        function overlay(html) { rt.ov = true; const o = $('#ov'); o.innerHTML = html; o.classList.add('on'); }
+        function closeOv() { if (VR && VR.listening) VR.cancel(); rt.ov = false; const o = $('#ov'); o.classList.remove('on'); o.innerHTML = ''; }
+
+        /* =====================================================================
+           7. SERTIFIKATLAR
+           ===================================================================== */
+        function generateCertificate(type, data) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 800;
+            canvas.height = 600;
+            const ctx = canvas.getContext('2d');
+
+            // Background
+            const gradient = ctx.createLinearGradient(0, 0, 800, 600);
+            gradient.addColorStop(0, '#fff7ed');
+            gradient.addColorStop(1, '#fef3c7');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 800, 600);
+
+            // Border
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(20, 20, 760, 560);
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(35, 35, 730, 530);
+
+            // Decorations
+            ctx.fillStyle = '#fde68a';
+            for (let i = 0; i < 20; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * 800, Math.random() * 600, Math.random() * 8 + 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Title
+            ctx.fillStyle = '#7c5cff';
+            ctx.font = 'bold 48px Fredoka, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🎓 SERTIFIKAT 🎓', 400, 100);
+
+            // Type
+            ctx.fillStyle = '#1f2937';
+            ctx.font = 'bold 32px Fredoka, sans-serif';
+            let title = '';
+            if (type === 'letters') title = 'Barcha harflarni o\'rgandi!';
+            else if (type === 'numbers') title = 'Barcha raqamlarni o\'rgandi!';
+            else if (type === 'all') title = 'Barcha darslarni tugatdi!';
+            else if (type === 'colors') title = 'Ranglarni o\'rgandi!';
+            ctx.fillText(title, 400, 180);
+
+            // Hero name
+            ctx.fillStyle = '#5b3fd6';
+            ctx.font = 'bold 40px Caveat, cursive';
+            ctx.fillText(data.heroName || 'Bola', 400, 280);
+
+            // Stars
+            ctx.font = '48px sans-serif';
+            ctx.fillText('⭐ ⭐ ⭐', 400, 350);
+
+            // Date
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '24px Fredoka, sans-serif';
+            ctx.fillText('Sana: ' + new Date().toLocaleDateString('uz-UZ'), 400, 450);
+
+            // App name
+            ctx.fillStyle = '#7c5cff';
+            ctx.font = '28px Fredoka, sans-serif';
+            ctx.fillText('Zukko Bolajon', 400, 520);
+
+            return canvas;
+        }
+
+        function downloadCertificate(type, data) {
+            const canvas = generateCertificate(type, data);
+            const link = document.createElement('a');
+            link.download = `sertifikat-${type}-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            if (!S.certificates.includes(type)) {
+                S.certificates.push(type);
+                save();
+            }
+        }
+
+        /* =====================================================================
+           8. EKRANLAR VA PROFIL MODALLARI
+           ===================================================================== */
+        const topbar = back => {
+            const activeChild = getActiveChild();
+            const childName = (activeChild && activeChild.name) || (S.hero === 'hadicha' ? 'Hadicha' : 'Muhammad');
+            const isMono = !!(S.settings && S.settings.monochrome);
+            return `<div class="topbar">
+                ${back ? `<button class="ibtn" data-a="${back}" aria-label="Orqaga">⬅️</button>` : ''}
+                <button class="profile-pill" data-a="openProfilePicker" aria-label="Profilni tanlash">
+                    <span class="avatar-sm">${heroSVG(S.hero || 'muhammad')}</span>
+                    <b>${esc(childName)}</b>
+                </button>
+                <div class="sp"></div>
+                <button class="monochrome-toggle ${isMono ? 'active' : ''}" data-a="toggleMonochrome" aria-label="Qora-oq rejim" title="Qora-oq (Yuqori kontrast) rejim">${isMono ? '☀️' : '🌓'}</button>
+                <button class="audio-toggle ${snd.globalMuted ? 'muted' : ''}" data-a="toggleAudio" aria-label="Tovush">${snd.globalMuted ? '🔇' : '🔊'}</button>
+                <div class="coinbox" aria-label="Tangalar"><span>🪙</span><b id="coinN">${S.coins}</b></div>
+            </div>`;
+        };
+
+        function showProfilePicker() {
+            const list = Array.isArray(S.children) && S.children.length ? S.children : [getActiveChild()];
+            overlay(`<div class="modal kid">
+                <h2 style="margin:0 0 14px">Bolani tanlang</h2>
+                <div class="profile-picker-grid">
+                    ${list.map(c => `
+                        <div class="child-card ${c.id === S.activeChildId ? 'active' : ''}" data-a="selectChild" data-v="${c.id}">
+                            <div class="c-avatar">${heroSVG(c.avatar || c.hero || 'muhammad', 'cheer')}</div>
+                            <div class="c-name">${esc(c.name)}</div>
+                            <div class="c-badge">🪙 ${c.coins || 0} • ${c.age || 5} yosh</div>
+                        </div>
+                    `).join('')}
+                    <div class="add-child-card" data-a="openAddChild">
+                        <span class="plus-icon">➕</span>
+                        <span style="font-weight:700;color:var(--p)">Yangi bola</span>
+                    </div>
+                </div>
+                <button class="btn alt" style="margin-top:16px" data-a="closeov">Yopish</button>
+            </div>`);
+        }
+
+        let _selectedHero = 'muhammad';
+        function showAddChildModal() {
+            _selectedHero = 'muhammad';
+            overlay(`<div class="modal kid">
+                <h2 style="margin:0 0 10px">Yangi bola qo'shish</h2>
+                <div style="display:flex;gap:16px;justify-content:center;margin:12px 0">
+                    <div class="c-card-pick" id="heroPickM" style="width:110px;border:3px solid var(--p);border-radius:18px;padding:8px;cursor:pointer" data-a="chooseNewHero" data-v="muhammad">
+                        <div style="height:100px">${heroSVG('muhammad', 'cheer')}</div>
+                        <b>Muhammad</b>
+                    </div>
+                    <div class="c-card-pick" id="heroPickH" style="width:110px;border:3px solid #cbd5e1;border-radius:18px;padding:8px;cursor:pointer" data-a="chooseNewHero" data-v="hadicha">
+                        <div style="height:100px">${heroSVG('hadicha', 'cheer')}</div>
+                        <b>Hadicha</b>
+                    </div>
+                </div>
+                <input id="newChildName" class="field" placeholder="Bolaning ismi" style="text-align:center;font-size:18px;margin-bottom:10px" maxlength="24">
+                <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:12px">
+                    <span style="font-weight:600">Yoshi:</span>
+                    <select id="newChildAge" style="font-size:18px;padding:4px 12px;border-radius:10px;border:2px solid #ccc">
+                        ${[3, 4, 5, 6, 7, 8].map(a => `<option value="${a}" ${a === 5 ? 'selected' : ''}>${a} yosh</option>`).join('')}
+                    </select>
+                </div>
+                <div id="newChildErr" style="color:#ef4444;font-size:14px;min-height:20px"></div>
+                <div class="row">
+                    <button class="btn alt" data-a="openProfilePicker">Orqaga</button>
+                    <button class="btn" data-a="saveNewChild">Saqlash</button>
+                </div>
+            </div>`);
+        }
+
+        async function saveNewChild() {
+            const name = ($('#newChildName').value || '').trim();
+            const age = +$('#newChildAge').value || 5;
+            const hero = _selectedHero || 'muhammad';
+            const err = $('#newChildErr');
+            if (!name) { if (err) err.textContent = "Iltimos, ismni kiriting"; return; }
+
+            let childId = 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+            let newChild = {
+                id: childId,
+                name,
+                hero,
+                avatar: hero,
+                age,
+                coins: 0,
+                prog: {},
+                words: 0,
+                math: 0,
+                owned: ['h_d1', 'o_m1', 'o_h1'],
+                equip: { muhammad: { hat: 'h_d1', glasses: null, outfit: 'o_m1', acc: null }, hadicha: { hat: null, glasses: null, outfit: 'o_h1', acc: null } },
+                days: {},
+                totalSec: 0,
+                settings: Object.assign({}, defaults().settings),
+                voiceRecords: {},
+                colorsProg: {},
+                reviewHistory: {},
+                certificates: [],
+                balloonScore: 0
+            };
+
+            if (UID) {
+                try {
+                    const resp = await fetch('/api/children', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({ uid: UID, name, avatar: hero, age, hero })
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.child) newChild = Object.assign(newChild, data.child);
+                    }
+                } catch (_) {}
+            }
+
+            if (!Array.isArray(S.children)) S.children = [];
+            S.children.push(newChild);
+            closeOv();
+            await switchActiveChild(newChild.id);
+        }
+
+        const R = {};
+        function go(scr, p = {}) {
+            const prev = rt.scr;
+            rt.timers.forEach(t => { clearInterval(t); clearTimeout(t); });
+            rt.timers = [];
+            if (scr !== 'lesson') RV = null;
+            if (prev === 'lesson' && typeof stopGuideAnim === 'function') stopGuideAnim();
+            if (prev === 'balloons' && typeof BP !== 'undefined' && BP) BP.running = false;
+            if (prev === 'syllables' && typeof SYL !== 'undefined' && SYL) clearTimeout(SYL.autoTimer);
+            if (prev === 'games' && scr !== 'games' && rt.gameSec >= 60) { rt.studySec = 0; rt.exSince = 0; }
+            if (scr === 'games' && prev !== 'games') { rt.gameSec = 0; rt.retShown = false; }
+            rt.scr = scr; rt.p = p; closeOv(); render();
+        }
+        function render() {
+            const r = R[rt.scr]; $('#app').innerHTML = r.html();
+            $('#gear').classList.toggle('on', !['auth', 'pick', 'parent'].includes(rt.scr));
+            updateCompanionWidget();
+            r.init && r.init();
+        }
+
+        /* ---------- AUTH ---------- */
+        R.auth = {
+            html() {
+                return `<div class="authwrap">
+ <svg class="authart" style="max-height:30vh" viewBox="0 0 520 250" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bde7ff"/><stop offset="1" stop-color="#fff3d1"/></linearGradient></defs>
+  <rect width="520" height="250" rx="34" fill="url(#sk)"/><circle cx="440" cy="62" r="34" fill="#ffd166"/><g stroke="#ffd166" stroke-width="6" stroke-linecap="round"><path d="M440 10v-6M440 114v6M388 62h-6M492 62h6"/></g>
+  <circle cx="430" cy="58" r="3.5" fill="#7a4b00"/><circle cx="450" cy="58" r="3.5" fill="#7a4b00"/><path d="M430 72q10 9 20 0" stroke="#7a4b00" stroke-width="3" fill="none"/>
+  <g fill="#fff"><ellipse cx="90" cy="54" rx="44" ry="18"/><ellipse cx="120" cy="44" rx="30" ry="18"/><ellipse cx="300" cy="36" rx="38" ry="14"/></g>
+  <path d="M0 210 Q130 150 260 200 T520 190 V250 H0Z" fill="#95e1a3"/><path d="M0 230 Q160 190 320 226 T520 220 V250 H0Z" fill="#6fcf97"/>
+  <g><line x1="330" y1="120" x2="342" y2="190" stroke="#999"/><ellipse cx="326" cy="106" rx="22" ry="27" fill="#ff6b6b"/><line x1="380" y1="110" x2="372" y2="190" stroke="#999"/><ellipse cx="384" cy="96" rx="22" ry="27" fill="#4cc9f0"/></g>
+  </svg>
+ <div class="row" style="gap:0;margin-top:-150px;pointer-events:none;position:relative;height:150px;align-items:flex-end"><div style="width:100px;margin-right:6px">${heroSVG('muhammad', 'cheer')}</div><div style="width:100px;margin-left:6px">${heroSVG('hadicha', 'cheer')}</div></div>
+ <div class="authtitle">Zukko Bolajon</div>
+ <button class="abtn g" data-a="authForm" data-v="google"><span style="font-size:26px">✉️</span>Elektron pochta orqali kirish</button>
+ <button class="abtn t" data-a="authForm" data-v="phone"><span style="font-size:26px">📱</span>Telefon raqam orqali kirish</button>
+ <div style="font-size:13px;opacity:.6;text-align:center;max-width:380px">Bu bo'lim faqat ota-onalar uchun. Pochta yoki raqam tasdiqlanmaydi va serverga faqat yashirin ko'rinishda yuboriladi.</div>
+ </div>`;
+            }
+        };
+        let _authAge = 5;
+        let _authHero = 'muhammad';
+        function authForm(v) {
+            _authAge = 5;
+            _authHero = 'muhammad';
+            overlay(`<div class="modal">
+  <div style="font-size:52px">${v === 'google' ? '📧' : '📱'}</div>
+  <h2 style="margin:6px 0 2px">Xush kelibsiz!</h2>
+  <div style="font-size:14px;opacity:.75;margin-bottom:10px">${v === 'google' ? 'Ota-ona pochtasi' : 'Telefon raqamingiz'} va bolaning yoshini kiriting:</div>
+  <input id="authIn" class="field" ${v === 'google' ? 'type="email" placeholder="Ota-ona pochtasi (masalan: ism@gmail.com)" autocomplete="email"' : 'type="tel" inputmode="numeric" placeholder="+998 90 123 45 67" autocomplete="tel"'}>
+  <input id="authChildName" class="field" type="text" placeholder="Bolaning ismi (masalan: Azizbek)" maxlength="24" style="text-align:center;font-weight:700">
+  
+  <div style="margin:12px 0 4px;font-weight:700;font-size:16px">Bolaning yoshini tanlang:</div>
+  <div class="age-picker-row" id="authAgeRow">
+    ${[3, 4, 5, 6, 7, 8].map(a => `<button type="button" class="age-chip-btn ${a === _authAge ? 'selected' : ''}" data-a="selectAuthAge" data-v="${a}">${a} yosh</button>`).join('')}
+  </div>
+
+  <div style="margin:12px 0 4px;font-weight:700;font-size:16px">Qahramonni tanlang:</div>
+  <div style="display:flex;gap:14px;justify-content:center;margin:8px 0">
+    <div class="c-card-pick" id="authHeroPickM" style="width:110px;border:3px solid var(--p);border-radius:18px;padding:8px;cursor:pointer" data-a="chooseAuthHero" data-v="muhammad">
+        <div style="height:90px">${heroSVG('muhammad', 'cheer')}</div>
+        <b>Muhammad</b>
+    </div>
+    <div class="c-card-pick" id="authHeroPickH" style="width:110px;border:3px solid #cbd5e1;border-radius:18px;padding:8px;cursor:pointer" data-a="chooseAuthHero" data-v="hadicha">
+        <div style="height:90px">${heroSVG('hadicha', 'cheer')}</div>
+        <b>Hadicha</b>
+    </div>
+  </div>
+
+  <div id="authErr" style="color:#dc2626;min-height:22px;font-size:14px"></div>
+  <div class="row"><button class="btn alt" data-a="closeov">Bekor qilish</button><button class="btn" data-a="authGo" data-v="${v}">Boshlash 🚀</button></div>
+  <div style="font-size:12px;opacity:.6;margin-top:10px">Tizim bolaning yoshiga qarab mashqlar murakkabligini avtomatik moslashtiradi.</div></div>`);
+            setTimeout(() => { const i = $('#authIn'); i && i.focus(); }, 100);
+        }
+
+        /* ---------- Qahramon tanlash ---------- */
+        R.pick = {
+            html() {
+                return `<div class="screen"><div class="pick">
+ <button class="pickcard" data-a="pickHero" data-v="muhammad">${heroSVG('muhammad', 'cheer')}</button>
+ <button class="pickcard" data-a="pickHero" data-v="hadicha">${heroSVG('hadicha', 'cheer')}</button></div></div>`;
+            },
+            init() { say("Do'stingni tanla!"); }
+        };
+
+        /* ---------- Asosiy ekran va Yoshga Moslashuv (Adaptive UI) ---------- */
+        function getAdaptiveTiles(age, filterMode = 'adaptive') {
+            const un = allDone();
+            const T_ALL = {
+                letters: ['letters', '✏️', pct('L'), 't1', false, 'Harflar'],
+                numbers: ['numbers', '🔢', pct('N'), 't2', false, 'Raqamlar'],
+                syllables: ['syllables', '🔤', null, 't3', false, 'Bo\'g\'inlar'],
+                balloons: ['balloons', '🎈', null, 't5', false, 'Sharlar'],
+                colors: ['colors', '🎨', null, 't7', false, 'Ranglar'],
+                counting: ['counting', '🧮', null, 't8', false, 'Sanash'],
+                words: ['words', '🧩', null, 't3', !un, 'So\'zlar'],
+                math: ['math', '➕', null, 't4', !un, 'Misollar'],
+                games: ['games', '🎮', null, 't5', false, 'O\'yinlar'],
+                shop: ['shop', '🛍️', null, 't6', false, 'Do\'kon']
+            };
+
+            if (filterMode === 'all') {
+                return Object.values(T_ALL);
+            }
+
+            if (age <= 4) {
+                // 3-4 yosh: ranglar, oddiy shakllar, harflar konturlari, sharlar, pufaklar, oddiy sanash
+                return [
+                    T_ALL.colors,
+                    ['game_shapes', '🔷', null, 't3', false, 'Shakllar'],
+                    T_ALL.letters,
+                    T_ALL.balloons,
+                    ['game_bubbles', '🫧', null, 't2', false, 'Pufaklar'],
+                    T_ALL.counting
+                ];
+            } else if (age <= 6) {
+                // 5-6 yosh: yozma harflar, bo'g'inlar, sanash, raqamlar, ranglar, sharlar, do'kon
+                return [
+                    T_ALL.letters,
+                    T_ALL.numbers,
+                    T_ALL.syllables,
+                    T_ALL.counting,
+                    T_ALL.colors,
+                    T_ALL.balloons,
+                    T_ALL.shop
+                ];
+            } else {
+                // 7-8 yosh: to'liq so'zlar, matematika, xotira va labirint, bo'g'inlar, harflar, do'kon
+                return [
+                    T_ALL.words,
+                    T_ALL.math,
+                    ['game_memory', '🧠', null, 't1', false, 'Xotira'],
+                    ['game_maze', '🌀', null, 't4', false, 'Labirint'],
+                    T_ALL.syllables,
+                    T_ALL.letters,
+                    T_ALL.shop
+                ];
+            }
+        }
+
+        R.home = {
+            html() {
+                const un = allDone();
+                const activeChild = getActiveChild();
+                const age = Number(activeChild && activeChild.age) || 5;
+                const filterMode = rt.ageFilter || 'adaptive';
+                const tiles = getAdaptiveTiles(age, filterMode);
+
+                const groupTitle = age <= 4 ? "Kichkintoylar (Ranglar, Shakllar, Konturlar)" : age <= 6 ? "Tayyorlov (Husnixat, Bo'g'inlar, Sanash)" : "Bilag'onlar (So'zlar, Matematika, Xotira)";
+                const doneL = LETTERS.filter((_, i) => progOf('L' + i) === 3).length;
+                const doneN = DIGITS.filter((_, i) => progOf('N' + i) === 3).length;
+                const reviewPct = Math.round((doneL + doneN) / (LETTERS.length + DIGITS.length) * 100);
+
+                return `<div class="screen">${topbar()}<div class="homebody">
+  <div class="age-adaptive-header">
+    <div class="age-badge">
+        <span>${age <= 4 ? '👶' : age <= 6 ? '🎒' : '🎓'}</span>
+        <b>${age} yosh</b>: ${groupTitle}
+    </div>
+    <div class="age-filter-tabs">
+        <button class="age-filter-btn ${filterMode === 'adaptive' ? 'active' : ''}" data-a="setAgeFilter" data-v="adaptive">⭐ Yoshga mos</button>
+        <button class="age-filter-btn ${filterMode === 'all' ? 'active' : ''}" data-a="setAgeFilter" data-v="all">🌟 Barchasi</button>
+    </div>
+  </div>
+  <div class="herobig bob" id="heroBig" data-a="heroTap">${heroSVG(S.hero)}</div>
+  <div class="tiles">${tiles.map(([a, e, p, c, l, title]) => {
+      let act = a;
+      let val = '';
+      if (a === 'game_shapes') { act = 'game'; val = 'shapes'; }
+      else if (a === 'game_bubbles') { act = 'game'; val = 'bubbles'; }
+      else if (a === 'game_memory') { act = 'game'; val = 'memory'; }
+      else if (a === 'game_maze') { act = 'game'; val = 'maze'; }
+      return `<button class="tile ${c} ${l ? 'locked' : ''} ${rt.justUnlocked && !l && (act === 'words' || act === 'math') ? 'unl' : ''}" data-a="${l ? 'locked' : act}" ${val ? `data-v="${val}"` : ''} title="${title || ''}"><span class="ico">${e}</span>${l ? '<em class="lk">🔒</em>' : ''}${p != null ? `<span class="pbar"><i style="width:${p}%"></i></span>` : ''}</button>`;
+  }).join('')}</div>
+  ${reviewPct > 0 ? `<button class="btn ok" style="margin-top:16px;font-size:24px;padding:10px 24px" data-a="review" title="Takrorlash">🔄 ⭐</button>` : ''}
+ </div></div>`;
+            },
+            init() { rt.justUnlocked = false; if (!rt.greeted) { rt.greeted = true; setTimeout(() => say("Salom! Bugun nimani o'rganamiz?"), 500); } }
+        };
+
+        /* ---------- Harflar / raqamlar ro'yxati ---------- */
+        const glyphOf = (kind, i) => kind === 'L' ? LETTERS[i][0] + ' ' + LETTERS[i][0].toLowerCase() : DIGITS[i][0];
+        const glyphHTML = (kind, i) => kind === 'L'
+            ? `<span class="cur-upper">${LETTERS[i][0]}</span><span class="cur-lower">${LETTERS[i][0].toLowerCase()}</span>`
+            : `<span class="cur-upper">${DIGITS[i][0]}</span>`;
+        const tileHTML = (kind, i) => kind === 'L'
+            ? `<span class="tile-glyph">${LETTERS[i][0].toLowerCase()}</span>`
+            : `<span class="tile-glyph">${DIGITS[i][0]}</span>`;
+        function listHTML(kind) {
+            const arr = kind === 'L' ? LETTERS : DIGITS;
+            return `<div class="screen">${topbar('home')}<div class="cards">${arr.map((_, i) => { const p = progOf(kind + i); return `<button class="lcard ${p === 3 ? 'full' : ''}" data-a="open" data-v="${kind}${i}"><div class="cur-wrap">${tileHTML(kind, i)}</div><span class="stars">${[0, 1, 2].map(k => `<span class="${p > k ? 'on' : ''}"></span>`).join('')}</span></button>`; }).join('')}</div></div>`;
+        }
+        R.letters = { html: () => listHTML('L') }; R.numbers = { html: () => listHTML('N') };
+
+        /* ---------- DARS: 3 bosqichli mashq ---------- */
+        let L = null, lay = null;
+        const stepIcons = ['✏️', '🧠', '🔍'];
+        function stepsHTML() { return [0, 1, 2].map(i => { const p = progOf(L.id); const done = p > i, cur = L.step === i, lock = i > p; return `<button class="stp ${done ? 'done' : ''} ${cur ? 'cur2' : ''} ${lock ? 'lock' : ''}" data-a="gostep" data-v="${i}">${lock ? '🔒' : (done ? '✅' : stepIcons[i])}</button>`; }).join(''); }
+        function openLesson(id) { const kind = id[0], i = +id.slice(1); L = { id, kind, i, step: Math.min(progOf(id), 2), fails: 0, busy: false }; go('lesson'); }
+        const lessonInfo = () => L.kind === 'L' ? { name: LETTERS[L.i][0] + ' harfi', emo: LETTERS[L.i][2], word: LETTERS[L.i][1] } : { name: UZN(L.i) + ' raqami', emo: DIGIT_EMO[L.i].repeat(L.i || 1), word: UZN(L.i) };
+        R.lesson = {
+            html() {
+                const g = lessonInfo(); return `<div class="screen">${topbar(L.kind === 'L' ? 'letters' : 'numbers')}<div class="steps" id="steps"></div>
+ <div class="lessonrow"><div class="side"><div class="heromini bob" id="heroMini">${heroSVG(S.hero)}</div><div class="pic">${g.emo}</div></div><div class="stage" id="stage"></div><div class="tools" id="tools"></div></div></div>`;
+            },
+            init() { renderStage(); }
+        };
+        function renderStage() {
+            $('#steps').innerHTML = stepsHTML(); L.fails = 0; L.busy = false; const st = $('#stage'), tl = $('#tools'), g = lessonInfo();
+            if (L.step < 2) {
+                st.innerHTML = `<div class="padwrap" id="pw"><canvas id="guide" width="600" height="600"></canvas><canvas id="pad" width="600" height="600"></canvas></div>`;
+                tl.innerHTML = `<button class="ibtn big" data-a="say">🔊</button><button class="ibtn big" data-a="recordVoice">🎤</button>${L.step === 1 ? '<button class="ibtn big" data-a="hint">💡</button>' : ''}<button class="ibtn big" data-a="clear">🗑️</button><button class="ibtn big ok" data-a="check">✅</button>`;
+                buildLayout(glyphOf(L.kind, L.i)).then(l => { lay = l; drawGuide(L.step === 0 ? 1 : 0); setupPad(); });
+                setTimeout(() => say(L.step === 0 ? `${g.name}. Xira shablon ustidan chizamiz!` : "Endi o'zing yozib ko'r!"), 300);
+            } else {
+                st.innerHTML = `<div class="cardgrid" id="cg"></div>`; tl.innerHTML = `<button class="ibtn big" data-a="say">🔊</button><button class="ibtn big" data-a="recordVoice">🎤</button>`; setupCards();
+                setTimeout(() => say(`Qani, ${g.name}ni topamiz! ${g.word}`), 300);
+            }
+        }
+        function extractWaypoints(mask, start) {
+            const pts = [];
+            const sx = start.x || 300, sy = start.y || 300;
+            pts.push({ x: sx, y: sy });
+            const visited = new Uint8Array(360000);
+            visited[sy * 600 + sx] = 1;
+            let cur = { x: sx, y: sy };
+
+            for (let iter = 0; iter < 80; iter++) {
+                let best = null, bestDist = 9999;
+                const R = 24;
+                for (let dy = -R; dy <= R; dy += 4) {
+                    for (let dx = -R; dx <= R; dx += 4) {
+                        const nx = cur.x + dx, ny = cur.y + dy;
+                        if (nx < 15 || nx >= 585 || ny < 15 || ny >= 585) continue;
+                        const idx = ny * 600 + nx;
+                        if (mask[idx] && !visited[idx]) {
+                            const d = Math.hypot(dx, dy);
+                            if (d >= 12 && d <= 26 && d < bestDist) {
+                                bestDist = d;
+                                best = { x: nx, y: ny };
+                            }
+                        }
+                    }
+                }
+                if (!best) break;
+                for (let vy = -10; vy <= 10; vy += 4) {
+                    for (let vx = -10; vx <= 10; vx += 4) {
+                        const px = best.x + vx, py = best.y + vy;
+                        if (px >= 0 && px < 600 && py >= 0 && py < 600) visited[py * 600 + px] = 1;
+                    }
+                }
+                pts.push(best);
+                cur = best;
+            }
+            if (pts.length < 2) pts.push({ x: sx + 20, y: sy + 30 });
+            return pts;
+        }
+
+        async function buildLayout(txt) {
+            try { await Promise.race([document.fonts.load("700 100px Caveat"), sleep(1500)]); } catch (e) { }
+            const fam = "Caveat,'Segoe Script','Bradley Hand','Brush Script MT',cursive";
+            const c = document.createElement('canvas'); c.width = c.height = 600; const x = c.getContext('2d', { willReadFrequently: true });
+            x.textAlign = 'center'; x.textBaseline = 'alphabetic'; x.lineJoin = 'round';
+            let size = 400; x.font = `700 ${size}px ${fam}`; let m = x.measureText(txt);
+            size = Math.min(size, size * 500 / m.width, size * 400 / (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent));
+            x.font = `700 ${size}px ${fam}`; m = x.measureText(txt);
+            const base = 300 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+            const xh = x.measureText('x').actualBoundingBoxAscent;
+            const mk = (stroke) => { x.clearRect(0, 0, 600, 600); if (stroke) { x.lineWidth = stroke; x.strokeStyle = '#000'; x.strokeText(txt, 300, base); } x.fillStyle = '#000'; x.fillText(txt, 300, base); const d = x.getImageData(0, 0, 600, 600).data; const a = new Uint8Array(360000); for (let i = 0; i < 360000; i++)a[i] = d[i * 4 + 3] > 110 ? 1 : 0; return a; };
+            const mask = mk(0), lenient = mk(90);
+            let st = -1; for (let i = 0; i < 360000 && st < 0; i++) if (mask[i]) st = i;
+            const start = st < 0 ? { x: 300, y: base } : { x: st % 600, y: (st / 600) | 0 };
+            const waypoints = extractWaypoints(mask, start);
+            return { txt, font: x.font, base, top: base - m.actualBoundingBoxAscent, xh: base - xh, mask, lenient, start, waypoints, wpIdx: 0, cnt: mask.reduce((s, v) => s + v, 0) };
+        }
+
+        let guideAnimFrame = null;
+        function stopGuideAnim() {
+            if (guideAnimFrame) { cancelAnimationFrame(guideAnimFrame); guideAnimFrame = null; }
+        }
+
+        function drawGuide(alpha) {
+            const cv = $('#guide'); if (!cv || !lay) return; const x = cv.getContext('2d');
+            x.fillStyle = '#fffefb'; x.fillRect(0, 0, 600, 600);
+            x.lineWidth = 2; x.strokeStyle = '#e4dbc6'; x.setLineDash([10, 14]);
+            [lay.top, lay.xh, lay.base].forEach(y => { x.beginPath(); x.moveTo(20, y); x.lineTo(580, y); x.stroke(); });
+            x.setLineDash([]);
+            if (alpha > 0) {
+                x.font = lay.font; x.textAlign = 'center'; x.textBaseline = 'alphabetic'; x.lineJoin = 'round'; x.lineCap = 'round';
+                x.globalAlpha = alpha; x.strokeStyle = '#d2ccb9'; x.lineWidth = 5; x.strokeText(lay.txt, 300, lay.base); x.globalAlpha = 1;
+
+                if (lay.waypoints && lay.waypoints.length > 1) {
+                    x.save();
+                    x.strokeStyle = '#eab95e';
+                    x.lineWidth = 4;
+                    x.setLineDash([6, 8]);
+                    x.beginPath();
+                    const startIdx = Math.min(lay.wpIdx || 0, lay.waypoints.length - 1);
+                    x.moveTo(lay.waypoints[startIdx].x, lay.waypoints[startIdx].y);
+                    for (let i = startIdx + 1; i < lay.waypoints.length; i++) {
+                        x.lineTo(lay.waypoints[i].x, lay.waypoints[i].y);
+                    }
+                    x.stroke();
+                    x.restore();
+                }
+
+                const wpIdx = Math.min(lay.wpIdx || 0, lay.waypoints.length - 1);
+                const curWp = lay.waypoints[wpIdx];
+                const nextWp = lay.waypoints[Math.min(wpIdx + 1, lay.waypoints.length - 1)] || curWp;
+                const angle = (nextWp.x !== curWp.x || nextWp.y !== curWp.y)
+                    ? Math.atan2(nextWp.y - curWp.y, nextWp.x - curWp.x)
+                    : 0;
+
+                const pulse = (Date.now() % 1200) / 1200 * Math.PI * 2;
+                const scale = 1 + 0.3 * Math.sin(pulse);
+
+                x.save();
+                x.translate(curWp.x, curWp.y);
+                x.rotate(angle);
+                x.scale(scale, scale);
+                x.shadowColor = '#f59e0b';
+                x.shadowBlur = 12;
+
+                x.fillStyle = '#f59e0b';
+                x.beginPath();
+                x.moveTo(18, 0);
+                x.lineTo(-4, -12);
+                x.lineTo(-4, -5);
+                x.lineTo(-18, -5);
+                x.lineTo(-18, 5);
+                x.lineTo(-4, 5);
+                x.lineTo(-4, 12);
+                x.closePath();
+                x.fill();
+                x.restore();
+
+                x.beginPath();
+                x.arc(curWp.x, curWp.y, 8, 0, Math.PI * 2);
+                x.fillStyle = '#10b981';
+                x.fill();
+            }
+        }
+
+        function startGuideAnim() {
+            stopGuideAnim();
+            function loop() {
+                if (rt.scr !== 'lesson' || !lay) return;
+                drawGuide(L.step === 0 ? 1 : (L.fails >= 2 ? 0.6 : 0));
+                guideAnimFrame = requestAnimationFrame(loop);
+            }
+            guideAnimFrame = requestAnimationFrame(loop);
+        }
+
+        let padLen = 0;
+        let validSegments = [];
+        let currentSegment = [];
+
+        function checkStray(px, py, mask, maxR = 25) {
+            const ix = Math.round(px), iy = Math.round(py);
+            if (ix >= 0 && ix < 600 && iy >= 0 && iy < 600 && mask[iy * 600 + ix]) return false;
+            for (let r = 4; r <= maxR; r += 4) {
+                for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+                    const cx = Math.round(px + Math.cos(a) * r);
+                    const cy = Math.round(py + Math.sin(a) * r);
+                    if (cx >= 0 && cx < 600 && cy >= 0 && cy < 600 && mask[cy * 600 + cx]) return false;
+                }
+            }
+            return true;
+        }
+
+        function redrawValidPad(ctx) {
+            ctx.clearRect(0, 0, 600, 600);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = 34;
+            ctx.shadowColor = '#10b981';
+            ctx.shadowBlur = 10;
+            ctx.strokeStyle = '#059669';
+            validSegments.forEach(seg => {
+                if (!seg || seg.length < 2) return;
+                ctx.beginPath();
+                ctx.moveTo(seg[0].x, seg[0].y);
+                for (let i = 1; i < seg.length; i++) ctx.lineTo(seg[i].x, seg[i].y);
+                ctx.stroke();
+            });
+            ctx.shadowBlur = 0;
+        }
+
+        function setupPad() {
+            const pad = $('#pad'); if (!pad) return;
+            const x = pad.getContext('2d', { willReadFrequently: true });
+            x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = 34;
+            x.strokeStyle = '#137b68'; x.fillStyle = '#137b68';
+            let down = false, last = null;
+            padLen = 0; validSegments = []; currentSegment = [];
+            startGuideAnim();
+
+            const pos = e => {
+                const r = pad.getBoundingClientRect();
+                return { x: (e.clientX - r.left) * 600 / r.width, y: (e.clientY - r.top) * 600 / r.height };
+            };
+
+            function triggerStrayClear(reason) {
+                down = false;
+                rt.drawing = false;
+                snd.wrong();
+                react('sad', 800);
+                const pw = $('#pw');
+                if (pw) {
+                    pw.classList.remove('stray-cleared');
+                    void pw.offsetWidth;
+                    pw.classList.add('stray-cleared');
+                }
+                clearPad();
+                if (lay) lay.wpIdx = 0;
+                say(reason === 'wrong_start' ? "Boshlash nuqtasidan — yashil strelkadan boshlaymiz!" : "Chiziqdan chiqib ketdik, qani boshidan chizamiz!");
+                recordLetterMistake(L.id, reason);
+            }
+
+            pad.onpointerdown = e => {
+                e.preventDefault();
+                try { pad.setPointerCapture(e.pointerId); } catch (_) { }
+                const p = pos(e);
+
+                // Waypoint start check: Harfni teskari yoki noto'g'ri nuqtadan boshlashni taqiqlash
+                if (L.step < 2 && lay && lay.waypoints && lay.waypoints.length) {
+                    const startWp = lay.waypoints[0];
+                    const curWp = lay.waypoints[Math.min(lay.wpIdx || 0, lay.waypoints.length - 1)];
+                    const targetWp = (lay.wpIdx === 0) ? startWp : curWp;
+                    const distFromTarget = Math.hypot(p.x - targetWp.x, p.y - targetWp.y);
+                    const distFromStart = Math.hypot(p.x - startWp.x, p.y - startWp.y);
+
+                    if (distFromStart > 60 && distFromTarget > 60) {
+                        triggerStrayClear('wrong_start');
+                        return;
+                    }
+                }
+
+                down = true; rt.drawing = true;
+                last = p;
+                currentSegment = [last];
+
+                if (L.step === 0 && lay && lay.mask && checkStray(last.x, last.y, lay.mask, 26)) {
+                    triggerStrayClear('stray');
+                    return;
+                }
+
+                x.shadowColor = '#ffd700';
+                x.shadowBlur = 8;
+                x.fillStyle = '#137b68';
+                x.beginPath(); x.arc(last.x, last.y, 17, 0, 7); x.fill();
+                snd.init(); snd.tone(520 + Math.random() * 80, .05, 'sine', .05);
+            };
+
+            pad.onpointermove = e => {
+                if (!down) return;
+                e.preventDefault();
+                const p = pos(e);
+
+                if (L.step === 0 && lay && lay.mask && checkStray(p.x, p.y, lay.mask, 28)) {
+                    triggerStrayClear('stray');
+                    return;
+                }
+
+                x.shadowColor = '#ffd700';
+                x.shadowBlur = 8;
+                x.strokeStyle = '#137b68';
+                x.beginPath();
+                x.moveTo(last.x, last.y);
+                x.lineTo(p.x, p.y);
+                x.stroke();
+
+                padLen += Math.hypot(p.x - last.x, p.y - last.y);
+                currentSegment.push(p);
+
+                if (lay && lay.waypoints && lay.waypoints.length) {
+                    const wp = lay.waypoints[lay.wpIdx || 0];
+                    if (wp && Math.hypot(p.x - wp.x, p.y - wp.y) < 32) {
+                        if (lay.wpIdx < lay.waypoints.length - 1) lay.wpIdx++;
+                    }
+                }
+
+                last = p;
+            };
+
+            const up = () => {
+                if (!down) return;
+                down = false;
+                rt.drawing = false;
+                if (currentSegment.length > 1) {
+                    validSegments.push(currentSegment);
+                    redrawValidPad(x);
+                }
+                currentSegment = [];
+                if (L.step === 0 && padLen > 280) autoCheck1();
+            };
+            pad.onpointerup = up;
+            pad.onpointercancel = up;
+        }
+        
+        function recordLetterMistake(id, reason) {
+            const ch = getActiveChild();
+            if (!ch.letterAnalytics) ch.letterAnalytics = {};
+            const item = ch.letterAnalytics[id] || (ch.letterAnalytics[id] = { attempts: 0, fails: 0, accuracy: 0, strayCount: 0 });
+            item.fails++;
+            if (reason === 'stray') item.strayCount = (item.strayCount || 0) + 1;
+            save();
+        }
+
+        function recordLetterAccuracy(id, accuracy) {
+            const ch = getActiveChild();
+            if (!ch.letterAnalytics) ch.letterAnalytics = {};
+            const item = ch.letterAnalytics[id] || (ch.letterAnalytics[id] = { attempts: 0, fails: 0, accuracy: 0, strayCount: 0 });
+            item.attempts++;
+            item.accuracy = Math.max(item.accuracy || 0, accuracy);
+            save();
+        }
+
+        function inkData() { return $('#pad').getContext('2d', { willReadFrequently: true }).getImageData(0, 0, 600, 600).data; }
+        function score1() {
+            const d = inkData(); let g = 0, gc = 0, dr = 0, out = 0;
+            for (let i = 0; i < 360000; i++) { const ink = d[i * 4 + 3] > 60; if (lay.mask[i]) { g++; if (ink) gc++; } if (ink) { dr++; if (!lay.lenient[i]) out++; } }
+            return { cov: g ? gc / g : 0, stray: dr ? out / dr : 1 };
+        }
+        function inkCount() { const d = inkData(); let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 60) n++; return n; }
+        function tooMuchInk() { return inkCount() > lay.cnt * 2.2; }
+        function autoCheck1() {
+            if (tooMuchInk()) return;
+            const s = score1();
+            const accuracy = Math.round(s.cov * 100);
+            recordLetterAccuracy(L.id, accuracy);
+            // Yetarli aniqlik (aniqlik > 75%) to'planganda, ilova avtomatik tarzda keyingi harf yoki bosqichga o'tadi
+            if (s.cov >= .75 && s.stray < .26) {
+                stepOK();
+            }
+        }
+        const GS = 4, GN = 150;
+        function sampleGrid(test) {
+            const g = new Uint8Array(GN * GN);
+            for (let y = 0; y < GN; y++)for (let x = 0; x < GN; x++)g[y * GN + x] = test((y * GS) * 600 + x * GS) ? 1 : 0;
+            return g;
+        }
+        function dilate(g, r) { const o = new Uint8Array(GN * GN); for (let y = 0; y < GN; y++)for (let x = 0; x < GN; x++)if (g[y * GN + x]) for (let dy = -r; dy <= r; dy++)for (let dx = -r; dx <= r; dx++) { const a = x + dx, b = y + dy; if (a >= 0 && b >= 0 && a < GN && b < GN) o[b * GN + a] = 1; } return o; }
+        function score2(target = lay) {
+            const d = inkData();
+            const ink = sampleGrid(i => d[i * 4 + 3] > 60), fill = sampleGrid(i => target.mask[i]), band = sampleGrid(i => target.lenient[i]);
+            const near = dilate(ink, 5); let t = 0, tc = 0, n = 0, nc = 0;
+            for (let i = 0; i < GN * GN; i++) { if (fill[i]) { t++; if (near[i]) tc++; } if (ink[i]) { n++; if (band[i]) nc++; } }
+            return { cov: t ? tc / t : 0, prec: n ? nc / n : 0 };
+        }
+        function bboxOf(mask) {
+            let x0 = 600, y0 = 600, x1 = -1, y1 = -1;
+            for (let i = 0; i < 360000; i++) if (mask[i]) { const x = i % 600, y = (i / 600) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+            return { w: x1 - x0 + 1, h: y1 - y0 + 1 };
+        }
+        function inkBox() {
+            const d = inkData(); let x0 = 600, y0 = 600, x1 = -1, y1 = -1;
+            for (let i = 0; i < 360000; i++) if (d[i * 4 + 3] > 60) { const x = i % 600, y = (i / 600) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+            return x1 < 0 ? null : { w: x1 - x0 + 1, h: y1 - y0 + 1 };
+        }
+        const ratioOK = (box, ref) => { if (!box || !ref.w || !ref.h || !box.h) return false; const r = (box.w / box.h) / (ref.w / ref.h); return r >= .58 && r <= 1.72; };
+        const layCache = {};
+        async function layFor(txt) { return layCache[txt] || (layCache[txt] = await buildLayout(txt)); }
+        const fScore = s => s.cov + s.prec ? (2 * s.cov * s.prec) / (s.cov + s.prec) : 0;
+        async function rivalBest() {
+            const own = glyphOf(L.kind, L.i);
+            const pool = (L.kind === 'L' ? LETTERS.map((_, i) => glyphOf('L', i)) : DIGITS.map((_, i) => glyphOf('N', i))).filter(t => t !== own);
+            let best = 0;
+            for (const t of pool) best = Math.max(best, fScore(score2(await layFor(t))));
+            return best;
+        }
+        function wrongFX() {
+            snd.wrong(); react('sad'); const pw = $('#pw'); if (pw) { pw.classList.remove('bad'); void pw.offsetWidth; pw.classList.add('bad'); }
+        }
+        async function check() {
+            if (L.busy || !lay) return;
+            if (padLen < 200) { wrongFX(); say("Yana urinib ko'ramiz!"); return; }
+            if (tooMuchInk()) { wrongFX(); say("Juda ko'p chizdingiz! Faqat harf ustidan iz qoldiring."); return; }
+            if (L.step === 0) { const s = score1(); if (s.cov >= .55 && s.stray < .38) stepOK(); else { wrongFX(); say("Shablon ustidan yurgizamiz!"); } return; }
+            const s = score2(), own = fScore(s);
+            const confused = (await rivalBest()) >= own + .09;
+            const shapeOK = ratioOK(inkBox(), bboxOf(lay.mask));
+            if (s.cov >= .6 && s.prec >= .7 && shapeOK && !confused) stepOK();
+            else { L.fails++; wrongFX(); say(!shapeOK ? "Harfni to'g'ri nisbatda yozing!" : confused ? "Bu boshqa harfga o'xshab ketdi, qayta yozing!" : "Yana urinib ko'ramiz!"); if (L.fails >= 2) { hint(); } }
+        }
+        function clearPad() { const p = $('#pad'); if (p) { p.getContext('2d').clearRect(0, 0, 600, 600); padLen = 0; } }
+        function hint() { if (!lay) return; drawGuide(1); setTimeout(() => drawGuide(L.step === 0 ? 1 : 0), 2200); }
+        function setupCards() {
+            const target = glyphOf(L.kind, L.i);
+            const pool = (L.kind === 'L' ? LETTERS.map((_, i) => glyphOf('L', i)) : DIGITS.map((_, i) => glyphOf('N', i))).filter(t => t !== target);
+            const opts = shuffle([target, ...shuffle(pool).slice(0, 5)]);
+            $('#cg').innerHTML = opts.map((t, idx) => {
+                const isTarget = t === target;
+                const ki = (L.kind === 'L' ? LETTERS : DIGITS).findIndex((_, ii) => glyphOf(L.kind, ii) === t);
+                const html = ki >= 0 ? glyphHTML(L.kind, ki) : `<span class="cur-upper">${t}</span>`;
+                return `<button class="opt" data-a="pickCard" data-v="${isTarget ? 1 : 0}"><div class="cur-wrap">${html}</div></button>`;
+            }).join('');
+        }
+        async function stepOK() {
+            if (L.busy) return; L.busy = true; const cur = L;
+            const was = allDone(), first = progOf(L.id) === L.step;
+            if (first) { S.prog[L.id] = L.step + 1; day().ex++; rt.exSince++; coins(3, $('.ibtn.ok') || $('#stage')); }
+            snd.success(); react('cheer'); confetti(50, innerWidth / 2, innerHeight / 2); say(pickOne(PRAISE));
+            const pw = $('#pw'); if (pw) pw.classList.add('ok');
+            if (first && L.step === 2) { day().lessons++; if (!was && allDone()) rt.justUnlocked = true; }
+            save(); await sleep(1700);
+            if (rt.scr !== 'lesson' || L !== cur) return;
+
+            // Check for certificate
+            const doneL = LETTERS.filter((_, i) => progOf('L' + i) === 3).length;
+            const doneN = DIGITS.filter((_, i) => progOf('N' + i) === 3).length;
+            if (L.kind === 'L' && doneL === LETTERS.length && !S.certificates.includes('letters')) {
+                setTimeout(() => showCertificateModal('letters'), 500);
+            }
+            if (L.kind === 'N' && doneN === DIGITS.length && !S.certificates.includes('numbers')) {
+                setTimeout(() => showCertificateModal('numbers'), 500);
+            }
+            if (allDone() && !S.certificates.includes('all')) {
+                setTimeout(() => showCertificateModal('all'), 500);
+            }
+
+            if (L.step < 2) { L.step++; renderStage(); } else lessonDone();
+        }
+        function showCertificateModal(type) {
+            let title = type === 'letters' ? 'Barcha harflar o\'rganildi!' : type === 'numbers' ? 'Barcha raqamlar o\'rganildi!' : 'Barcha darslar tugatildi!';
+            overlay(`<div class="modal kid">
+                <div class="bigglyph">🏆</div>
+                <h2>${title}</h2>
+                <div style="width:150px">${heroSVG(S.hero, 'cheer')}</div>
+                <p>Sertifikat yuklab olish</p>
+                <div class="row">
+                    <button class="btn" data-a="downloadCert" data-v="${type}">📥 Yuklab olish</button>
+                    <button class="btn alt" data-a="closeov">Keyinroq</button>
+                </div>
+            </div>`);
+            confetti(120);
+            snd.success();
+        }
+        function nextIncomplete() { const arr = L.kind === 'L' ? LETTERS : DIGITS; for (let k = 1; k <= arr.length; k++) { const j = (L.i + k) % arr.length; if (progOf(L.kind + j) < 3 && j !== L.i) return L.kind + j; } return null; }
+        function lessonDone() {
+            L.busy = false;
+            if (rt.justUnlocked) {
+                overlay(`<div class="modal kid"><div class="bigglyph">🔓</div><div class="row bigemo" style="font-size:80px">🧩 ➕</div><div style="width:150px">${heroSVG(S.hero, 'cheer')}</div><button class="ibtn big ok" data-a="home">🏠</button></div>`);
+                confetti(160); snd.success(); say("Ajoyib! Endi so'zlar va misollar ochildi!"); return;
+            }
+            let nx, wasReview = false;
+            if (RV) {
+                wasReview = true;
+                const dk = dkey(); S.reviewHistory[dk] = (S.reviewHistory[dk] || 0) + 1; save();
+                RV.current++; nx = RV.items[RV.current] || null;
+                if (!nx) RV = null;
+            } else nx = nextIncomplete();
+            overlay(`<div class="modal kid"><div class="cur bigglyph" style="color:#5b3fd6;font-size:130px">${glyphOf(L.kind, L.i)}</div><div style="font-size:48px">⭐⭐⭐</div><div style="width:130px">${heroSVG(S.hero, 'cheer')}</div><div class="row"><button class="ibtn big" data-a="home">🏠</button>${nx ? `<button class="ibtn big ok" data-a="open" data-v="${nx}">➡️</button>` : (wasReview ? '' : `<button class="ibtn big ok" data-a="${L.kind === 'L' ? 'letters' : 'numbers'}">📋</button>`)}</div></div>`);
+            confetti(110);
+        }
+
+        /* ---------- RANGLAR BO'LIMI ---------- */
+        let CL = null;
+        R.colors = {
+            html() {
+                return `<div class="screen">${topbar('home')}<div class="center" id="colorC"></div></div>`;
+            },
+            init() {
+                CL = { mode: 'learn', current: 0 };
+                drawColorLearn();
+                say("Ranglarni o'rganamiz!");
+            }
+        };
+        function drawColorLearn() {
+            const color = COLORS[CL.current];
+            const progress = S.colorsProg[CL.current] || 0;
+            const host = $('#colorC'); if (!host) return; host.innerHTML = `
+                <div class="bigemo" style="font-size:120px">${color[1]}</div>
+                <h2 style="font-size:36px;color:${color[2]}">${color[0]}</h2>
+                <div class="row" style="gap:8px;font-size:50px">${color[3].join('')}</div>
+                <span class="stars">${[0, 1, 2].map(k => `<span class="${progress > k ? 'on' : ''}"></span>`).join('')}</span>
+                <div class="row">
+                    <button class="ibtn big" data-a="prevColor">⬅️</button>
+                    <button class="ibtn big" data-a="sayColor">🔊</button>
+                    <button class="ibtn big ok" data-a="colorQuiz">✅</button>
+                    <button class="ibtn big" data-a="nextColor">➡️</button>
+                </div>
+            `;
+        }
+        function colorQuiz() {
+            const color = COLORS[CL.current];
+            const opts = shuffle([color, ...shuffle(COLORS.filter(c => c[0] !== color[0])).slice(0, 3)]);
+            overlay(`<div class="modal kid">
+                <div class="bigemo" style="font-size:100px">${color[1]}</div>
+                <h2>Qaysi rang?</h2>
+                <div class="grid2" style="gap:10px">
+                    ${opts.map(o => `<button class="btn ${o[0] === color[0] ? 'ok' : 'alt'}" data-a="colorPick" data-v="${o[0] === color[0] ? 1 : 0}" style="background:${o[2]};color:#fff">${o[0]}</button>`).join('')}
+                </div>
+            </div>`);
+        }
+
+        /* ---------- SANASH O'YINI ---------- */
+        let CG = null;
+        R.counting = {
+            html() {
+                return `<div class="screen">${topbar('home')}<div class="center" id="countC"></div></div>`;
+            },
+            init() {
+                newCountGame();
+            }
+        };
+        function newCountGame() {
+            const count = 1 + rnd(9);
+            const item = pickOne(COUNT_ITEMS);
+            const items = Array(count).fill(item);
+            const opts = shuffle([count, ...shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9].filter(n => n !== count)).slice(0, 3)]);
+            CG = { count, items, opts, busy: false };
+            drawCountGame();
+            say(`${count}ta narsa. Qancha?`);
+        }
+        function drawCountGame() {
+            const host = $('#countC'); if (!host) return; host.innerHTML = `
+                <div class="row" style="gap:6px;font-size:50px;flex-wrap:wrap;max-width:400px;justify-content:center">
+                    ${CG.items.map(i => `<span>${i}</span>`).join('')}
+                </div>
+                <h2>Qancha?</h2>
+                <div class="wordrow">
+                    ${CG.opts.map(o => `<button class="tile2" style="width:80px" data-a="countPick" data-v="${o}"><span class="cur" style="font-size:50px">${o}</span></button>`).join('')}
+                </div>
+                <button class="ibtn big" data-a="sayCount">🔊</button>
+            `;
+        }
+
+        /* ---------- SO'ZLAR TUZISH ---------- */
+        let W = null;
+        function newWord() { const w = pickOne(WORDS.filter(x => !W || x[0] !== W.w)); W = { w: w[0], e: w[1], i: 0, tiles: shuffle(w[0].split('').map((c, k) => ({ c, k, used: false }))), busy: false }; }
+        R.words = {
+            html() { newWord(); return `<div class="screen">${topbar('home')}<div class="center" id="wc"></div></div>`; },
+            init() { drawWord(); say(W.w.toLowerCase()); }
+        };
+        function drawWord() {
+            const host = $('#wc'); if (!host) return; host.innerHTML = `<div class="row"><div class="bigemo">${W.e}</div><button class="ibtn big" data-a="sayWord">🔊</button></div>
+ <div class="wordrow">${W.w.split('').map((c, k) => `<div class="slot ${k < W.i ? 'fill' : ''}"><span class="cur">${k < W.i ? c : ''}</span></div>`).join('')}</div>
+ <div class="wordrow">${W.tiles.map((t, k) => `<button class="tile2 ${t.used ? 'used' : ''}" data-a="tileW" data-v="${k}"><span class="cur">${t.c}</span></button>`).join('')}</div>`;
+        }
+        /* ---------- MISOLLAR ---------- */
+        let M = null;
+        const MEMO = ['🍎', '🍓', '🐥', '⭐', '🎈', '🍪', '🐟', '🚗'];
+        function newMath() {
+            const add = Math.random() < .6, e = pickOne(MEMO); let a, b, r;
+            if (add) { a = 1 + rnd(5); b = 1 + rnd(Math.min(5, 9 - a)); r = a + b; } else { a = 2 + rnd(8); b = 1 + rnd(a - 1); r = a - b; }
+            const o = new Set([r]); while (o.size < 3) { const v = Math.max(0, Math.min(9, r + pickOne([-2, -1, 1, 2, 3]))); o.add(v); }
+            M = { add, a, b, r, e, opts: shuffle([...o]), busy: false };
+        }
+        R.math = {
+            html() { newMath(); return `<div class="screen">${topbar('home')}<div class="center" id="mc"></div></div>`; },
+            init() { drawMath(); sayMath(); }
+        };
+        function sayMath() { say(`${UZN(M.a)} ${M.add ? "qo'shuv" : 'ayiruv'} ${UZN(M.b)} necha bo'ladi?`); }
+        function drawMath() {
+            const g = (n, x) => `<div class="grp">${Array.from({ length: n }, () => `<span class="${x ? 'x' : ''}">${M.e}</span>`).join('')}</div>`;
+            const host = $('#mc'); if (!host) return; host.innerHTML = `<div class="row"><div class="eq">${g(M.a, false)}<b>${M.add ? '➕' : '➖'}</b>${g(M.b, !M.add)}<b>🟰</b><b>❓</b></div><button class="ibtn big" data-a="sayMath">🔊</button></div>
+ <div class="wordrow">${M.opts.map(v => `<button class="tile2" style="width:clamp(86px,15vw,130px)" data-a="ansM" data-v="${v}"><span class="cur" style="font-size:clamp(64px,11vw,100px)">${v}</span></button>`).join('')}</div>`;
+        }
+
+        /* ---------- BO'G'INLAR VA NUTQNI TEKSHIRISH (SYLLABLES) ---------- */
+        let SYL = null;
+        const SYLLABLE_PAIRS = [
+            { s1: 'da', s2: 'da', word: 'dada', emo: '👨' },
+            { s1: 'bo', s2: 'la', word: 'bola', emo: '🧒' },
+            { s1: 'o', s2: 'na', word: 'ona', emo: '👩' },
+            { s1: 'o', s2: 'ta', word: 'ota', emo: '🧔' },
+            { s1: 'bu', s2: 'vi', word: 'buvi', emo: '👵' },
+            { s1: 'ak', s2: 'a', word: 'aka', emo: '👦' },
+            { s1: 'uk', s2: 'a', word: 'uka', emo: '👶' },
+            { s1: 'ol', s2: 'ma', word: 'olma', emo: '🍎' },
+            { s1: 'no', s2: 'n', word: 'non', emo: '🥖' },
+            { s1: 'gu', s2: 'l', word: 'gul', emo: '🌸' },
+            { s1: 'qu', s2: 'sh', word: 'qush', emo: '🐦' }
+        ];
+
+        R.syllables = {
+            html() {
+                return `<div class="screen">${topbar('home')}<div class="center" id="sylHost" style="gap:20px;max-width:540px;margin:0 auto"></div></div>`;
+            },
+            init() {
+                if (!SYL) SYL = { idx: 0, merged: false, listening: false, autoTimer: null };
+                SYL.merged = false;
+                SYL.listening = false;
+                renderSyllableStage();
+            }
+        };
+
+        function renderSyllableStage() {
+            const host = $('#sylHost');
+            if (!host) return;
+            const cur = SYLLABLE_PAIRS[SYL.idx % SYLLABLE_PAIRS.length];
+
+            host.innerHTML = `
+                <div class="row" style="align-items:center;gap:16px">
+                    <div class="heromini bob" id="heroMini">${heroSVG(S.hero)}</div>
+                    <div class="pic" style="font-size:72px">${cur.emo}</div>
+                </div>
+                <div id="sylDisplay" style="min-height:140px;display:flex;align-items:center;justify-content:center">
+                    ${SYL.merged ? `
+                        <div class="syllable-merged-word">${cur.word.toUpperCase()}</div>
+                    ` : `
+                        <div class="syllable-container" id="sylCards">
+                            <div class="syllable-card left">${cur.s1}</div>
+                            <div style="font-size:44px;color:#7c5cff;font-weight:800">➕</div>
+                            <div class="syllable-card right">${cur.s2}</div>
+                        </div>
+                    `}
+                </div>
+                <div class="row" style="gap:16px;margin-top:10px">
+                    ${!SYL.merged ? `
+                        <button class="ibtn big ok" data-a="sylMerge" aria-label="Birlashtirish" title="Birlashtirish">✨</button>
+                    ` : `
+                        <button class="ibtn big" data-a="sylSay" aria-label="Eshitish" title="Eshitish">🔊</button>
+                        <button class="mic-btn-huge ${SYL.listening ? 'listening' : ''}" data-a="sylMic" aria-label="Gapiring" title="Gapirish">🎤</button>
+                        <button class="ibtn big ok" data-a="sylNext" aria-label="Keyingisi" title="Keyingisi">➡️</button>
+                    `}
+                </div>
+            `;
+
+            if (!SYL.merged) {
+                say(`${cur.s1} va ${cur.s2}. Birlashtiramiz!`);
+                clearTimeout(SYL.autoTimer);
+                SYL.autoTimer = setTimeout(() => {
+                    if (rt.scr === 'syllables' && !SYL.merged) sylMerge();
+                }, 1700);
+            } else {
+                say(cur.word);
+            }
+        }
+
+        function sylMerge() {
+            clearTimeout(SYL.autoTimer);
+            const box = $('#sylCards');
+            if (box) box.classList.add('syllables-merged');
+            snd.whoosh();
+            setTimeout(() => {
+                if (rt.scr !== 'syllables') return;
+                SYL.merged = true;
+                renderSyllableStage();
+                snd.pop();
+                const cur = SYLLABLE_PAIRS[SYL.idx % SYLLABLE_PAIRS.length];
+                say(`${cur.word}! Endi mikrofonga ayting: ${cur.word}!`);
+            }, 600);
+        }
+
+        async function sylMic() {
+            if (!VR) VR = new VoiceRecorder();
+            if (SYL.listening) {
+                VR.stop();
+                SYL.listening = false;
+                renderSyllableStage();
+                return;
+            }
+            const cur = SYLLABLE_PAIRS[SYL.idx % SYLLABLE_PAIRS.length];
+            SYL.listening = true;
+            renderSyllableStage();
+
+            if (!VR.supported) {
+                SYL.listening = false;
+                renderSyllableStage();
+                snd.success();
+                confetti(60);
+                react('cheer');
+                say(`Barakalla! ${cur.word}!`);
+                coins(2, $('#sylHost'));
+                day().ex++;
+                save();
+                setTimeout(sylNext, 2000);
+                return;
+            }
+
+            const targets = [cur.word, cur.word.replace(/['`ʻʼ]/g, ''), cur.s1 + cur.s2];
+            const res = await VR.listen(targets);
+            SYL.listening = false;
+            if (rt.scr !== 'syllables') return;
+
+            if (res.score >= 50 || (!res.error && res.recognized)) {
+                snd.success();
+                confetti(80);
+                react('cheer');
+                say(pickOne(PRAISE) + '! ' + cur.word);
+                coins(3, $('#sylHost'));
+                day().ex++;
+                save();
+                setTimeout(sylNext, 2200);
+            } else {
+                snd.wrong();
+                say(`Qayta aytib ko'ramiz: ${cur.word}!`);
+                renderSyllableStage();
+            }
+        }
+
+        function sylNext() {
+            SYL.idx = (SYL.idx + 1) % SYLLABLE_PAIRS.length;
+            SYL.merged = false;
+            SYL.listening = false;
+            renderSyllableStage();
+        }
+
+        /* ---------- RANGLI SHARLAR MINI-O'YINI (BALLOONS) ---------- */
+        const BALLOON_COLORS = [
+            { id: 'qizil', name: 'Qizil', hex: '#ef4444', emo: '🔴' },
+            { id: 'kok', name: 'Ko\'k', hex: '#3b82f6', emo: '🔵' },
+            { id: 'sariq', name: 'Sariq', hex: '#eab308', emo: '🟡' },
+            { id: 'yashil', name: 'Yashil', hex: '#22c55e', emo: '🟢' },
+            { id: 'binafsha', name: 'Binafsha', hex: '#a855f7', emo: '🟣' },
+            { id: 'toq_sariq', name: 'To\'q sariq', hex: '#f97316', emo: '🟠' }
+        ];
+        let BP = null;
+
+        R.balloons = {
+            html() {
+                return `<div class="balloon-screen" id="balloonScreen">
+                    <div class="topbar" style="position:absolute;top:0;left:0;right:0;z-index:30">
+                        <button class="ibtn" data-a="home" aria-label="Orqaga">⬅️</button>
+                        <div class="sp"></div>
+                        <button class="audio-toggle ${snd.globalMuted ? 'muted' : ''}" data-a="toggleAudio" aria-label="Tovush">${snd.globalMuted ? '🔇' : '🔊'}</button>
+                        <div class="coinbox" aria-label="Ball"><span>🎈</span><b id="bpScore">0</b></div>
+                    </div>
+                    <div class="balloon-target-bar" id="bpTargetBar">
+                        <span class="avatar-sm" style="width:36px;height:46px">${heroSVG(S.hero || 'muhammad')}</span>
+                        <div class="balloon-target-dot" id="bpTargetDot"></div>
+                        <b id="bpTargetName" style="font-size:22px;color:var(--ink)">...</b>
+                        <button class="ibtn" data-a="sayTargetColor" style="width:40px;height:40px;font-size:20px" aria-label="Eshitish">🔊</button>
+                    </div>
+                    <div id="balloonLayer" style="position:absolute;inset:0;overflow:hidden"></div>
+                </div>`;
+            },
+            init() {
+                startBalloonGame();
+            }
+        };
+
+        function startBalloonGame() {
+            if (BP && BP.animId) cancelAnimationFrame(BP.animId);
+            BP = {
+                score: 0,
+                target: pickOne(BALLOON_COLORS),
+                balloons: [],
+                animId: null,
+                lastSpawn: 0,
+                running: true
+            };
+            updateBalloonTargetUI();
+            promptBalloonTarget();
+            runBalloonLoop();
+        }
+
+        function updateBalloonTargetUI() {
+            if (!BP || !BP.target) return;
+            const dot = $('#bpTargetDot'), nm = $('#bpTargetName'), sc = $('#bpScore');
+            if (dot) dot.style.background = BP.target.hex;
+            if (nm) { nm.textContent = BP.target.name; nm.style.color = BP.target.hex; }
+            if (sc) sc.textContent = BP.score;
+        }
+
+        function promptBalloonTarget() {
+            if (!BP || !BP.target) return;
+            const h = S.hero === 'hadicha' ? 'Hadicha' : 'Muhammad';
+            say(`${h}: ${BP.target.name} sharni yor!`);
+        }
+
+        function spawnBalloonObj() {
+            const layer = $('#balloonLayer');
+            if (!layer || !BP) return;
+            const col = pickOne(BALLOON_COLORS);
+            const w = 76, h = 106;
+            const screenW = Math.max(320, window.innerWidth);
+            const screenH = Math.max(480, window.innerHeight);
+            const x = 20 + Math.random() * (screenW - w - 40);
+            const y = screenH + 20;
+            const speed = 1.3 + Math.random() * 1.6;
+            const freq = 0.02 + Math.random() * 0.03;
+            const amp = 15 + Math.random() * 25;
+            const phase = Math.random() * Math.PI * 2;
+
+            const el = document.createElement('div');
+            el.className = 'balloon-obj';
+            el.style.width = w + 'px';
+            el.style.height = h + 'px';
+            el.style.left = '0px';
+            el.style.top = '0px';
+            el.style.transform = `translate(${x}px, ${y}px)`;
+
+            const gradId = 'bg_' + Math.random().toString(36).slice(2, 8);
+            el.innerHTML = `
+                <svg width="74" height="104" viewBox="0 0 74 104" style="pointer-events:none">
+                    <defs>
+                        <radialGradient id="${gradId}" cx="35%" cy="30%" r="65%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85"/>
+                            <stop offset="30%" stop-color="${col.hex}" stop-opacity="0.95"/>
+                            <stop offset="100%" stop-color="${col.hex}"/>
+                        </radialGradient>
+                    </defs>
+                    <ellipse cx="37" cy="42" rx="34" ry="40" fill="url(#${gradId})"/>
+                    <polygon points="34,82 40,82 37,88" fill="${col.hex}"/>
+                    <path d="M37 88 Q32 94 37 102" stroke="rgba(0,0,0,0.3)" stroke-width="2" fill="none"/>
+                </svg>
+            `;
+
+            const bObj = { el, color: col, x, y, baseX: x, speed, freq, amp, phase, t: 0 };
+
+            el.onpointerdown = e => {
+                e.preventDefault();
+                e.stopPropagation();
+                onBalloonTap(bObj);
+            };
+
+            layer.appendChild(el);
+            BP.balloons.push(bObj);
+        }
+
+        function onBalloonTap(bObj) {
+            if (!BP || !BP.running) return;
+            if (bObj.color.id === BP.target.id) {
+                popBalloon(bObj);
+                BP.score++;
+                const sc = $('#bpScore');
+                if (sc) sc.textContent = BP.score;
+                snd.pop();
+                snd.tone(880 + Math.random() * 200, 0.08, 'triangle', 0.25);
+                react('cheer');
+                if (BP.score % 5 === 0) coins(2, bObj.el);
+
+                const ch = getActiveChild();
+                if (ch) {
+                    ch.balloonScore = Math.max(ch.balloonScore || 0, BP.score);
+                    save();
+                    if (UID) {
+                        fetch(`/api/children/${ch.id}/stats`, {
+                            method: 'POST',
+                            headers: { 'content-type': 'application/json' },
+                            body: JSON.stringify({ uid: UID, balloonScore: ch.balloonScore })
+                        }).catch(() => {});
+                    }
+                }
+
+                const others = BALLOON_COLORS.filter(c => c.id !== BP.target.id);
+                BP.target = pickOne(others);
+                updateBalloonTargetUI();
+                say(pickOne(PRAISE) + `! Endi ${BP.target.name} sharni yor!`);
+            } else {
+                snd.wrong();
+                bObj.el.classList.remove('balloon-shake');
+                void bObj.el.offsetWidth;
+                bObj.el.classList.add('balloon-shake');
+                say(`Yo'q, bu ${bObj.color.name}. ${BP.target.name} sharni yor!`);
+            }
+        }
+
+        function popBalloon(bObj) {
+            const idx = BP.balloons.indexOf(bObj);
+            if (idx >= 0) BP.balloons.splice(idx, 1);
+            const rect = bObj.el.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            bObj.el.remove();
+            createParticleBurst(cx, cy, bObj.color.hex);
+        }
+
+        function createParticleBurst(cx, cy, hex) {
+            const count = 18;
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.className = 'balloon-particle';
+                const size = 8 + Math.random() * 10;
+                p.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;width:${size}px;height:${size}px;border-radius:50%;background:${hex};pointer-events:none;z-index:100;box-shadow:0 0 8px ${hex};`;
+                document.body.appendChild(p);
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 40 + Math.random() * 80;
+                const dx = Math.cos(angle) * dist;
+                const dy = Math.sin(angle) * dist;
+                p.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${dx}px, ${dy}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: 500 + Math.random() * 300,
+                    easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
+                }).onfinish = () => p.remove();
+            }
+        }
+
+        function runBalloonLoop() {
+            function step(ts) {
+                if (rt.scr !== 'balloons' || !BP || !BP.running) {
+                    if (BP) {
+                        BP.balloons.forEach(b => b.el.remove());
+                        BP.balloons = [];
+                        BP.running = false;
+                    }
+                    return;
+                }
+
+                if (ts - BP.lastSpawn > 950 && BP.balloons.length < 8) {
+                    spawnBalloonObj();
+                    BP.lastSpawn = ts;
+                }
+
+                for (let i = BP.balloons.length - 1; i >= 0; i--) {
+                    const b = BP.balloons[i];
+                    b.y -= b.speed;
+                    b.t += 0.05;
+                    b.x = b.baseX + Math.sin(b.t * b.freq + b.phase) * b.amp;
+                    b.el.style.transform = `translate(${b.x}px, ${b.y}px)`;
+
+                    if (b.y < -130) {
+                        b.el.remove();
+                        BP.balloons.splice(i, 1);
+                    }
+                }
+
+                BP.animId = requestAnimationFrame(step);
+            }
+            BP.animId = requestAnimationFrame(step);
+        }
+
+        /* ---------- O'YINLAR PANELI ---------- */
+        const SHAPES = { circle: '<circle cx="50" cy="50" r="40"/>', square: '<rect x="12" y="12" width="76" height="76" rx="10"/>', tri: '<polygon points="50,10 92,86 8,86"/>', star: '<polygon points="50,6 61,38 95,38 67,58 78,92 50,72 22,92 33,58 5,38 39,38"/>', heart: '<path d="M50 88 C10 56 6 30 26 20 C40 14 50 24 50 32 C50 24 60 14 74 20 C94 30 90 56 50 88Z"/>', diamond: '<polygon points="50,6 92,50 50,94 8,50"/>' };
+        const SCOL = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#ec4899'];
+        let SH = null;
+        R.games = {
+            html() {
+                const g = rt.p.game;
+                if (!g) return `<div class="screen">${topbar('home')}<div class="homebody"><div class="tiles" style="width:min(520px,94vw);grid-template-columns:repeat(2,1fr)"><button class="tile t5" data-a="balloons"><span class="ico">🎈</span></button><button class="tile t2" data-a="game" data-v="bubbles"><span class="ico">🫧</span></button><button class="tile t3" data-a="game" data-v="shapes"><span class="ico">🔷</span></button><button class="tile t1" data-a="game" data-v="memory"><span class="ico">🧠</span></button><button class="tile t4" data-a="game" data-v="maze"><span class="ico">🌀</span></button></div></div></div>`;
+                if (g === 'bubbles') return `<div class="screen"><div class="topbar"><button class="ibtn" data-a="games">⬅️</button><div class="sp"></div><div class="coinbox" id="popc">🫧 <b id="popn">0</b></div></div><div class="bubfield" id="bf"></div></div>`;
+                if (g === 'memory') return `<div class="screen">${topbar('games')}<div class="center" id="memC"></div></div>`;
+                if (g === 'maze') return `<div class="screen">${topbar('games')}<div class="center" id="mazeC"></div></div>`;
+                return `<div class="screen"><div class="topbar"><button class="ibtn" data-a="games">⬅️</button><div class="sp"></div></div><div class="center" id="sc"></div></div>`;
+            },
+            init() {
+                const g = rt.p.game;
+                if (g === 'bubbles') { rt.pops = 0; rt.timers.push(setInterval(spawnBubble, 750)); spawnBubble(); }
+                if (g === 'shapes') newShape();
+                if (g === 'memory') newMemoryGame();
+                if (g === 'maze') newMazeGame();
+            }
+        };
+        function spawnBubble() {
+            const f = $('#bf'); if (!f) return; const b = document.createElement('button'); const s = 60 + rnd(70);
+            b.className = 'bubble2'; b.style.cssText = `width:${s}px;height:${s}px;left:${rnd(Math.max(1, f.clientWidth - s))}px;animation-duration:${6 + rnd(5)}s;background:radial-gradient(circle at 30% 30%,#fff8,${pickOne(['#7dd3fc', '#f9a8d4', '#fde68a', '#a7f3d0', '#c4b5fd'])})`;
+            b.onpointerdown = e => { e.preventDefault(); const r = b.getBoundingClientRect(); b.remove(); snd.pop(); rt.pops++; const n = $('#popn'); if (n) n.textContent = rt.pops; confetti(10, r.left + r.width / 2, r.top + r.height / 2); };
+            b.onanimationend = () => b.remove(); f.appendChild(b);
+        }
+        function newShape() {
+            const ks = shuffle(Object.keys(SHAPES)); const t = ks[0]; const opts = shuffle(ks.slice(0, 3));
+            SH = { t, opts: opts.map((k, i) => ({ k, c: SCOL[(i + rnd(3) * 2) % SCOL.length] })) };
+            const host = $('#sc'); if (!host) return; host.innerHTML = `<div class="shapebox" style="background:#ddd"><svg viewBox="0 0 100 100" fill="#555">${SHAPES[t]}</svg></div><div class="row">${SH.opts.map((o, i) => `<button class="shapebox" data-a="shapePick" data-v="${i}"><svg viewBox="0 0 100 100" fill="${o.c}">${SHAPES[o.k]}</svg></button>`).join('')}</div>`;
+        }
+
+        /* ---------- XOTIRA O'YINI ---------- */
+        let MG = null;
+        function newMemoryGame() {
+            const pairs = 4;
+            const symbols = shuffle(['🍎', '🍊', '🍋', '🍇', '🍓', '🍒', '🥝', '🍑']).slice(0, pairs);
+            const cards = shuffle([...symbols, ...symbols]).map((s, i) => ({ id: i, symbol: s, flipped: false, matched: false }));
+            MG = { cards, moves: 0, flippedCards: [], busy: false, matched: 0, totalPairs: pairs };
+            drawMemoryGame();
+            say("Xotira o'yini! Kartochkalarni top!");
+        }
+        function drawMemoryGame() {
+            const host = $('#memC'); if (!host) return; host.innerHTML = `
+                <div style="margin-bottom:10px">Harakatlar: ${MG.moves} | Topildi: ${MG.matched}/${MG.totalPairs}</div>
+                <div class="grid2" style="grid-template-columns:repeat(4,1fr);gap:10px">
+                    ${MG.cards.map((c, i) => `
+                        <button class="opt ${c.flipped || c.matched ? '' : ''}"
+                            data-a="memPick" data-v="${i}"
+                            style="aspect-ratio:1;height:70px;font-size:36px;
+                            background:${c.flipped || c.matched ? '#bbf7d0' : '#fff'}">
+                            ${c.flipped || c.matched ? c.symbol : '❓'}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        /* ---------- LABIRINT O'YINI ---------- */
+        let MAZE = null;
+        function newMazeGame() {
+            const size = 7;
+            const grid = [];
+            for (let y = 0; y < size; y++) {
+                grid[y] = [];
+                for (let x = 0; x < size; x++) {
+                    grid[y][x] = Math.random() < 0.3 ? 1 : 0;
+                }
+            }
+            let px = 0, py = 0;
+            grid[0][0] = 0;
+            while (px < size - 1 || py < size - 1) {
+                if (px === size - 1) py++;
+                else if (py === size - 1) px++;
+                else if (Math.random() < 0.5) px++;
+                else py++;
+                grid[py][px] = 0;
+            }
+
+            MAZE = {
+                grid,
+                size,
+                player: { x: 0, y: 0 },
+                goal: { x: size - 1, y: size - 1 },
+                moves: 0,
+                won: false
+            };
+            drawMazeGame();
+            say("Labirint! Chiqishni top!");
+        }
+        function drawMazeGame() {
+            const cellSize = Math.min(40, (window.innerWidth - 60) / MAZE.size);
+            const host = $('#mazeC'); if (!host) return; host.innerHTML = `
+                <div style="margin-bottom:10px">Harakatlar: ${MAZE.moves}</div>
+                <div id="mazeGrid" style="display:grid;grid-template-columns:repeat(${MAZE.size},${cellSize}px);gap:2px;background:#ddd;padding:10px;border-radius:12px">
+                    ${MAZE.grid.map((row, y) => row.map((cell, x) => {
+                        const isPlayer = MAZE.player.x === x && MAZE.player.y === y;
+                        const isGoal = MAZE.goal.x === x && MAZE.goal.y === y;
+                        const bg = cell ? '#333' : '#fff';
+                        const content = isPlayer ? '😊' : isGoal ? '🏆' : '';
+                        return `<div style="width:${cellSize}px;height:${cellSize}px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:20px">${content}</div>`;
+                    }).join('')).join('')}
+                </div>
+                <div class="row" style="margin-top:16px;gap:8px">
+                    <button class="ibtn" data-a="mazeMove" data-v="up">⬆️</button>
+                </div>
+                <div class="row" style="gap:8px">
+                    <button class="ibtn" data-a="mazeMove" data-v="left">⬅️</button>
+                    <button class="ibtn" data-a="mazeMove" data-v="down">⬇️</button>
+                    <button class="ibtn" data-a="mazeMove" data-v="right">➡️</button>
+                </div>
+            `;
+        }
+
+        /* ---------- DO'KON ---------- */
+        R.shop = {
+            html() {
+                const h = S.hero, cat = rt.cat, list = ITEMS.filter(i => i.cat === cat && (!i.hero || i.hero === h));
+                const eq = S.equip[h];
+                return `<div class="screen">${topbar('home')}<div class="shop"><div class="shopL"><div class="herobig bob" id="heroBig" style="height:min(46vh,340px)">${heroSVG(h)}</div></div>
+  <div class="shopR"><div class="cats">${CATS.map(([c, e]) => `<button class="cat ${c === cat ? 'on' : ''}" data-a="cat" data-v="${c}">${e}</button>`).join('')}</div>
+  <div class="items">${cat !== 'outfit' ? `<button class="item ${!eq[cat] ? 'eq2' : ''}" data-a="unequip" data-v="${cat}"><div class="ic">🚫</div></button>` : ''}${list.map(it => { const own = S.owned.includes(it.id); return `<button class="item ${eq[cat] === it.id ? 'eq2' : ''}" data-a="buy" data-v="${it.id}"><div class="ic">${itemIcon(it)}</div>${own ? '<span class="price">✔️</span>' : `<span class="price">🪙 ${it.price}</span>`}</button>`; }).join('')}</div></div></div></div>`;
+            }
+        };
+
+        /* ---------- OTA-ONALAR KABINETI ---------- */
+        R.parent = {
+            html() {
+                const ch = getActiveChild();
+                const children = Array.isArray(S.children) && S.children.length ? S.children : [ch];
+                const d = day(), st = S.settings, mins = s => Math.round(s / 60);
+                const doneL = LETTERS.filter((_, i) => progOf('L' + i) === 3).length, doneN = DIGITS.filter((_, i) => progOf('N' + i) === 3).length;
+                const names = ['Yak', 'Du', 'Se', 'Chor', 'Pay', 'Jum', 'Shan'];
+                const hist = [...Array(7)].map((_, k) => { const dt = new Date(); dt.setDate(dt.getDate() - (6 - k)); return { k: dkey(dt), n: names[dt.getDay()], d: S.days[dkey(dt)] }; });
+                const mx = Math.max(60, ...hist.map(h => h.d ? h.d.sec : 0));
+                const task = (ok, t) => `<div class="rowset"><span>${t}</span><b>${ok ? '✅ Bajarildi' : '❌ Bajarilmadi'}</b></div>`;
+                const sel = (k, vals, fmt) => `<select data-set="${k}">${vals.map(v => `<option value="${v}" ${st[k] === v ? 'selected' : ''}>${fmt(v)}</option>`).join('')}</select>`;
+                return `<div class="screen"><div class="topbar" style="padding-right:0"><button class="ibtn" data-a="home" aria-label="Orqaga">⬅️</button><div style="font-size:24px;font-weight:700;margin-left:6px">Ota-onalar kabineti</div></div>
+  <div class="parent"><div class="pwrap">
+  <div class="panel">
+    <h3>👶 Oila bolalari (${children.length})</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0">
+        ${children.map(c => `
+            <button class="btn ${c.id === S.activeChildId ? 'primary' : 'alt'}" data-a="switchParentChild" data-v="${c.id}" style="display:flex;align-items:center;gap:6px">
+                <span>${c.avatar === 'hadicha' ? '👧' : '👦'}</span>
+                <b>${esc(c.name)}</b>
+                <span style="opacity:.7;font-size:12px">(${c.age || 5} yosh)</span>
+            </button>
+        `).join('')}
+        <button class="btn alt" data-a="openAddChild" style="border-style:dashed">+ Yangi bola qo'shish</button>
+    </div>
+  </div>
+  <div class="panel"><h3>📅 ${esc(ch.name)}: Bugungi mashg'ulotlar</h3>
+   ${task(d.ex >= 3, 'Kamida 3 ta mashq bajarish (' + d.ex + '/3)')}
+   ${task(d.lessons >= 1, "1 ta harf yoki raqamni to'liq tugatish (" + d.lessons + '/1)')}
+   ${task(d.sec >= 600, '10 daqiqa shug\'ullanish (' + mins(d.sec) + ' daq)')}
+   <div style="margin-top:12px;font-weight:600">So'nggi 7 kun</div>
+   <div class="days">${hist.map(h => `<div class="day"><div class="b"><i style="height:${h.d ? Math.max(4, h.d.sec / mx * 90) : 4}px"></i></div><div>${h.d && h.d.ex >= 3 ? '✅' : (h.k === dkey() ? '⏳' : '❌')}</div><div>${h.n}</div><div style="opacity:.6">${h.d ? mins(h.d.sec) : 0} daq</div></div>`).join('')}</div></div>
+  <div class="panel"><h3>📊 ${esc(ch.name)}: O'zlashtirish statistikasi</h3><div class="grid2">
+   <div class="stat"><b>${doneL}/${LETTERS.length}</b>Harflar yakunlandi</div><div class="stat"><b>${doneN}/${DIGITS.length}</b>Raqamlar yakunlandi</div>
+   <div class="stat"><b>🪙 ${S.coins}</b>To'plangan tangalar</div><div class="stat"><b>${mins(S.totalSec)} daq</b>Jami vaqt (bugun: ${mins(d.sec)})</div>
+   <div class="stat"><b>${S.words}</b>Tuzilgan so'zlar</div><div class="stat"><b>${S.math}</b>Yechilgan misollar</div>
+   <div class="stat"><b>🎈 ${ch.balloonScore || 0}</b>Sharlar o'yini rekordi</div></div>
+   <div style="margin-top:12px"><b>Harflar:</b><br>${LETTERS.map((l, i) => `<span class="chip c${progOf('L' + i)}">${l[0]}</span>`).join('')}</div>
+   <div style="margin-top:8px"><b>Raqamlar:</b><br>${DIGITS.map((l, i) => `<span class="chip c${progOf('N' + i)}">${l[0]}</span>`).join('')}</div>
+   <div style="font-size:13px;opacity:.65;margin-top:6px">Yashil – 3 mashq ham bajarilgan, sariq – jarayonda, kulrang – boshlanmagan.</div></div>
+  <div class="panel"><h3>🏆 Sertifikatlar</h3>
+   ${S.certificates.includes('letters') ? '<div class="rowset"><span>✅ Harflar sertifikati</span><button class="btn alt" data-a="downloadCert" data-v="letters">📥</button></div>' : ''}
+   ${S.certificates.includes('numbers') ? '<div class="rowset"><span>✅ Raqamlar sertifikati</span><button class="btn alt" data-a="downloadCert" data-v="numbers">📥</button></div>' : ''}
+   ${S.certificates.includes('all') ? '<div class="rowset"><span>✅ Barcha darslar sertifikati</span><button class="btn alt" data-a="downloadCert" data-v="all">📥</button></div>' : ''}
+   ${S.certificates.length === 0 ? '<div style="opacity:.6">Hali sertifikat yo\'q</div>' : ''}
+  </div>
+  <div class="panel"><h3>⚙️ Cheklov va nazorat</h3>
+   <div class="rowset"><span>Dam olish taklifi (ketma-ket dars)</span>${sel('breakMin', [5, 10, 12, 15], v => v + ' daqiqa')}</div>
+   <div class="rowset"><span>O'yin vaqti (so'ng darsga qaytarish)</span>${sel('gameMin', [3, 5, 7, 10], v => v + ' daqiqa')}</div>
+   <div class="rowset"><span>Kunlik umumiy limit</span>${sel('dailyMin', [0, 20, 30, 45, 60, 90], v => v ? v + ' daqiqa' : 'Cheklovsiz')}</div>
+   <div class="rowset"><span>Tovush effektlari va ovozli ko'rsatma</span><input type="checkbox" data-tog="sound" ${st.sound ? 'checked' : ''} style="width:26px;height:26px"></div>
+   <div class="rowset"><span>Fon musiqasi</span><input type="checkbox" data-tog="music" ${st.music ? 'checked' : ''} style="width:26px;height:26px"></div>
+   <div class="rowset"><span>Ota-ona PIN-kodi</span><button class="btn alt" data-a="changePin">PIN kodni o'zgartirish</button></div>
+  </div>
+  <div class="panel"><h3>👤 Hisob</h3><div class="rowset"><span>Kirish: ${S.auth ? (S.auth.type === 'google' ? 'Email' : 'Telefon') + ' — ' + esc(S.auth.id) : '—'}</span></div>
+   <div class="row" style="flex-wrap:wrap;justify-content:flex-start;margin-top:8px"><button class="btn alt" data-a="changeHero">Qahramonni almashtirish</button>${DEBUG ? '<button class="btn alt" data-a="testAll">Test: hammasini bajarilgan deb belgilash</button>' : ''}<button class="btn red" data-a="resetAll">Progressni tozalash</button><button class="btn alt" data-a="logout">Chiqish</button></div></div>
+  </div></div></div>`;
+            }
+        };
+
+        /* ---------- TAKRORLASH ---------- */
+        let RV = null;
+        function startReview() {
+            const inProgress = [], done = [];
+            LETTERS.forEach((_, i) => { const p = progOf('L' + i); if (p > 0 && p < 3) inProgress.push('L' + i); else if (p === 3) done.push('L' + i); });
+            DIGITS.forEach((_, i) => { const p = progOf('N' + i); if (p > 0 && p < 3) inProgress.push('N' + i); else if (p === 3) done.push('N' + i); });
+            // Avval tugallanmagan darslar; ular bo'lmasa, o'rganilganlardan 5 tasi takrorlanadi
+            const items = inProgress.length ? shuffle(inProgress) : shuffle(done).slice(0, 5);
+            if (!items.length) {
+                overlay(`<div class="modal kid"><div class="bigglyph">✏️</div><h2>Avval bironta harf o'rganamiz!</h2><button class="btn" data-a="closeov">OK</button></div>`);
+                return;
+            }
+            RV = { items, current: 0 };
+            openLesson(items[0]);
+        }
+
+        /* =====================================================================
+           9. HARAKATLAR
+           ===================================================================== */
+        const A = {
+            closeov: () => closeOv(),
+            authForm: v => authForm(v),
+            authGo(v) {
+                const val = ($('#authIn').value || '').trim(), err = $('#authErr');
+                if (v === 'google' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) { err.textContent = "Email manzilini to'g'ri kiriting"; return; }
+                if (v === 'phone') { const dg = val.replace(/\D/g, ''); if (dg.length < 9) { err.textContent = "Telefon raqamni to'liq kiriting"; return; } }
+                S.auth = { type: v, id: val }; save(); closeOv(); go(S.hero ? 'home' : 'pick');
+            },
+            pickHero(v) { S.hero = v; save(); snd.giggle(); confetti(60); say(v === 'muhammad' ? 'Men Muhammadman!' : 'Men Hadichaman!'); later(() => go('home'), 900); },
+            home: () => go('home'), letters: () => go('letters'), numbers: () => go('numbers'), words: () => go('words'), math: () => go('math'), games: () => go('games'), shop: () => go('shop'),
+            colors: () => go('colors'), counting: () => go('counting'), review: () => startReview(),
+            game: v => go('games', { game: v }),
+            heroTap() { snd.giggle(); react('cheer', 1200); say(pickOne(['Salom!', "Qani, o'ynaymiz!", 'Men tayyorman!'])); },
+            locked() {
+                const pr = Math.round((pct('L') + pct('N')) / 2); snd.wrong();
+                overlay(`<div class="modal kid"><div class="bigglyph">🔒</div><div style="width:min(300px,80%);height:20px;background:#eee;border-radius:12px;overflow:hidden"><div style="width:${pr}%;height:100%;background:#22c55e"></div></div><div style="width:120px">${heroSVG(S.hero, 'happy')}</div><div class="row"><button class="ibtn big" data-a="letters">✏️</button><button class="ibtn big" data-a="numbers">🔢</button></div></div>`);
+                say("Avval barcha harf va raqamlarni o'rganamiz!");
+            },
+            open: v => { closeOv(); openLesson(v); },
+            gostep(v) { v = +v; if (v > progOf(L.id)) { snd.wrong(); const b = $$('.stp')[v]; b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); return; } if (rt.drawing || L.busy) return; L.step = v; renderStage(); },
+            say() { const g = lessonInfo(); say(L.step === 2 ? `${g.name}. ${g.word}` : `${g.name}. ${g.word}`); },
+            clear() { const p = $('#pad'); if (p) { p.getContext('2d').clearRect(0, 0, 600, 600); padLen = 0; } },
+            check: () => check().catch(err => console.error('check failed', err)), hint: () => hint(),
+            recordVoice: async () => {
+                if (!VR) VR = new VoiceRecorder();
+                if (VR.listening) { VR.stop(); return; }
+                if (!VR.supported) {
+                    overlay(`<div class="modal kid"><div class="bigglyph">🎤</div><h2>Ovozni tanish ishlamayapti</h2><p>Bu brauzer ovozni tanishni qo'llamaydi. Google Chrome yoki Edge'dan foydalaning.</p><button class="btn" data-a="closeov">OK</button></div>`);
+                    return;
+                }
+                const g = lessonInfo(), lesson = L;
+                const targets = lesson.kind === 'L' ? [g.word, LETTERS[lesson.i][0]] : [g.word, String(lesson.i)];
+                if ('speechSynthesis' in window) speechSynthesis.cancel(); // ovozli ko'rsatma mikrofonga tushmasin
+                overlay(`<div class="modal kid"><div class="bigglyph mic-on">🎤</div><h2>Ayting: ${esc(g.word)}</h2><button class="ibtn big ok" data-a="recordVoice">⏹️</button></div>`);
+                const result = await VR.listen(targets);
+                if (result.cancelled || rt.scr !== 'lesson' || L !== lesson) return;
+
+                const problem = {
+                    'not-allowed': "Mikrofonga ruxsat bering", 'service-not-allowed': "Mikrofonga ruxsat bering",
+                    'audio-capture': "Mikrofon topilmadi", 'network': "Ovozni tanish uchun internet kerak",
+                    'language-not-supported': "Bu brauzer o'zbek tilini tanimaydi", 'no-speech': "Hech narsa eshitilmadi. Yana urinib ko'ring"
+                }[result.error] || (result.error ? "Ovozni tanib bo'lmadi. Yana urinib ko'ring" : (result.recognized ? '' : "Hech narsa eshitilmadi. Yana urinib ko'ring"));
+                if (problem) {
+                    overlay(`<div class="modal kid"><div class="bigglyph">🎤</div><h2>${esc(problem)}</h2><button class="btn" data-a="closeov">OK</button></div>`);
+                    return;
+                }
+
+                const rec = S.voiceRecords[lesson.id] || { best: 0, tries: 0, at: 0 };
+                rec.tries++; rec.best = Math.max(rec.best, result.score); rec.at = Date.now();
+                S.voiceRecords[lesson.id] = rec; save();
+
+                overlay(`<div class="modal kid">
+                    <div class="bigglyph">🎤</div>
+                    <h2>Ovoz natijasi</h2>
+                    <div style="font-size:24px">Siz: "${esc(result.recognized)}"</div>
+                    <div style="font-size:48px;margin:10px">${result.score}%</div>
+                    <div style="width:200px;height:20px;background:#eee;border-radius:10px;overflow:hidden">
+                        <div style="width:${result.score}%;height:100%;background:${result.score >= 70 ? '#22c55e' : result.score >= 50 ? '#f59e0b' : '#ef4444'}"></div>
+                    </div>
+                    <button class="btn" data-a="closeov">OK</button>
+                </div>`);
+                if (result.score >= 70) { snd.success(); confetti(30); }
+            },
+            pickCard(v, el) {
+                if (L.busy) return;
+                if (v === '1') { el.classList.add('right'); stepOK(); }
+                else { el.classList.add('wrong'); snd.wrong(); react('sad'); say("Yana urinib ko'ramiz!"); }
+            },
+            sayWord: () => say(W.w.toLowerCase()),
+            tileW(v, el) {
+                if (W.busy) return; const t = W.tiles[+v];
+                if (t.c === W.w[W.i]) {
+                    t.used = true; W.i++; snd.pop(); drawWord();
+                    if (W.i === W.w.length) { W.busy = true; S.words++; day().ex++; rt.exSince++; save(); snd.success(); confetti(90); react('cheer'); say(W.w.toLowerCase() + '. ' + pickOne(PRAISE)); coins(2, $('.bigemo')); later(() => { newWord(); drawWord(); say(W.w.toLowerCase()); }, 2000); }
+                } else { el.classList.add('wrong'); snd.wrong(); say("Yana urinib ko'ramiz!"); }
+            },
+            sayMath: () => sayMath(),
+            ansM(v, el) {
+                if (M.busy) return;
+                if (+v === M.r) { M.busy = true; S.math++; day().ex++; rt.exSince++; save(); el.style.background = '#bbf7d0'; snd.success(); confetti(80); coins(2, el); say(String(M.r) + '. ' + pickOne(PRAISE)); later(() => { newMath(); drawMath(); sayMath(); }, 1900); }
+                else { el.classList.add('wrong'); snd.wrong(); say("Yana urinib ko'ramiz!"); }
+            },
+            shapePick(v, el) {
+                const o = SH.opts[+v];
+                if (o.k === SH.t) { el.classList.add('right'); snd.success(); confetti(50); say(pickOne(PRAISE)); later(newShape, 1100); }
+                else { el.classList.add('wrong'); snd.wrong(); }
+            },
+            // Ranglar
+            prevColor() {
+                CL.current = (CL.current - 1 + COLORS.length) % COLORS.length;
+                drawColorLearn();
+                const c = COLORS[CL.current];
+                say(c[0]);
+            },
+            nextColor() {
+                CL.current = (CL.current + 1) % COLORS.length;
+                drawColorLearn();
+                const c = COLORS[CL.current];
+                say(c[0]);
+            },
+            sayColor() {
+                const c = COLORS[CL.current];
+                say(c[0] + ' rang');
+            },
+            colorQuiz: () => colorQuiz(),
+            colorPick(v, el) {
+                if (v === '1') {
+                    S.colorsProg[CL.current] = Math.min(3, (S.colorsProg[CL.current] || 0) + 1);
+                    save();
+                    snd.success();
+                    confetti(60);
+                    coins(2, el);
+                    say(pickOne(PRAISE));
+                    later(() => {
+                        closeOv();
+                        CL.current = (CL.current + 1) % COLORS.length;
+                        drawColorLearn();
+                    }, 1500);
+                } else {
+                    el.classList.add('wrong');
+                    snd.wrong();
+                    say("Yana urinib ko'ramiz!");
+                }
+            },
+            // Sanash
+            countPick(v, el) {
+                if (CG.busy) return;
+                CG.busy = true;
+                if (+v === CG.count) {
+                    el.style.background = '#bbf7d0';
+                    snd.success();
+                    confetti(60);
+                    coins(2, el);
+                    say(CG.count + '. ' + pickOne(PRAISE));
+                    later(() => {
+                        newCountGame();
+                    }, 1500);
+                } else {
+                    el.classList.add('wrong');
+                    snd.wrong();
+                    say("Yana urinib ko'ramiz!");
+                    CG.busy = false;
+                }
+            },
+            sayCount() {
+                say(`${CG.count}ta narsa. Qancha?`);
+            },
+            // Xotira o'yini
+            memPick(v, el) {
+                if (MG.busy) return;
+                const idx = +v;
+                const card = MG.cards[idx];
+
+                if (card.flipped || card.matched) return;
+
+                card.flipped = true;
+                MG.flippedCards.push(idx);
+                drawMemoryGame();
+
+                if (MG.flippedCards.length === 2) {
+                    MG.moves++;
+                    MG.busy = true;
+
+                    const [first, second] = MG.flippedCards;
+                    const card1 = MG.cards[first];
+                    const card2 = MG.cards[second];
+
+                    if (card1.symbol === card2.symbol) {
+                        card1.matched = true;
+                        card2.matched = true;
+                        MG.matched++;
+                        MG.flippedCards = [];
+                        MG.busy = false;
+                        snd.success();
+
+                        if (MG.matched === MG.totalPairs) {
+                            later(() => {
+                                overlay(`<div class="modal kid">
+                                    <div class="bigglyph">🎉</div>
+                                    <h2>Yutding!</h2>
+                                    <div>Harakatlar: ${MG.moves}</div>
+                                    <button class="btn" data-a="game" data-v="memory">Yana</button>
+                                    <button class="btn alt" data-a="games">Chiqish</button>
+                                </div>`);
+                                confetti(100);
+                                coins(5, el);
+                            }, 500);
+                        }
+                    } else {
+                        later(() => {
+                            card1.flipped = false;
+                            card2.flipped = false;
+                            MG.flippedCards = [];
+                            MG.busy = false;
+                            drawMemoryGame();
+                        }, 800);
+                    }
+                }
+            },
+            // Labirint
+            mazeMove(v) {
+                if (MAZE.won) return;
+
+                let newX = MAZE.player.x;
+                let newY = MAZE.player.y;
+
+                if (v === 'up') newY--;
+                if (v === 'down') newY++;
+                if (v === 'left') newX--;
+                if (v === 'right') newX++;
+
+                if (newX >= 0 && newX < MAZE.size && newY >= 0 && newY < MAZE.size && MAZE.grid[newY][newX] === 0) {
+                    MAZE.player.x = newX;
+                    MAZE.player.y = newY;
+                    MAZE.moves++;
+                    drawMazeGame();
+                    snd.whoosh();
+
+                    if (newX === MAZE.goal.x && newY === MAZE.goal.y) {
+                        MAZE.won = true;
+                        later(() => {
+                            overlay(`<div class="modal kid">
+                                <div class="bigglyph">🏆</div>
+                                <h2>Tabriklaymiz!</h2>
+                                <div>Harakatlar: ${MAZE.moves}</div>
+                                <button class="btn" data-a="game" data-v="maze">Yana</button>
+                                <button class="btn alt" data-a="games">Chiqish</button>
+                            </div>`);
+                            confetti(120);
+                            snd.success();
+                            coins(5, null);
+                        }, 300);
+                    }
+                } else if (newX >= 0 && newX < MAZE.size && newY >= 0 && newY < MAZE.size) {
+                    snd.wrong();
+                    react('sad', 800);
+                    say("Devor! Boshqa yo'nalishga uring!");
+                }
+            },
+            cat(v) { rt.cat = v; render(); },
+            unequip(v) { S.equip[S.hero][v] = null; save(); snd.click(); render(); },
+            buy(v, el) {
+                const it = ITEM[v], eq = S.equip[S.hero];
+                if (S.owned.includes(v)) { eq[it.cat] = v; save(); snd.whoosh(); render(); react('cheer', 1200); return; }
+                if (S.coins >= it.price) { S.coins -= it.price; S.owned.push(v); eq[it.cat] = v; save(); snd.success(); confetti(60); say('Yangi narsa!'); render(); react('cheer', 1500); }
+                else { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); snd.wrong(); react('sad', 1200); say("Tangalar yetmayapti. Mashq qilamiz!"); }
+            },
+            downloadCert(v) {
+                downloadCertificate(v, { heroName: S.hero === 'muhammad' ? 'Muhammad' : 'Hadicha' });
+                snd.success();
+                say("Sertifikat yuklab olindi!");
+            },
+            changeHero() { S.hero = S.hero === 'muhammad' ? 'hadicha' : 'muhammad'; save(); render(); },
+            testAll() { if (!confirm("Barcha harf va raqamlar bajarilgan deb belgilansinmi? (Test uchun)")) return; LETTERS.forEach((_, i) => S.prog['L' + i] = 3); DIGITS.forEach((_, i) => S.prog['N' + i] = 3); save(); render(); },
+            resetAll() { if (!confirm("Bolaning barcha progressi, tangalari va statistikasi o'chiriladi. Davom etasizmi?")) return; const a = S.auth, h = S.hero; Object.assign(S, defaults(), { auth: a, hero: h }); save(); render(); },
+            logout() { if (!confirm('Hisobdan chiqilsinmi?')) return; S.auth = null; save(); go('auth'); },
+
+            // Profil boshqaruvi
+            openProfilePicker: () => showProfilePicker(),
+            selectChild: id => switchActiveChild(id),
+            openAddChild: () => showAddChildModal(),
+            chooseNewHero: h => {
+                _selectedHero = h;
+                const m = $('#heroPickM'), hd = $('#heroPickH');
+                if (m && hd) {
+                    m.style.borderColor = h === 'muhammad' ? 'var(--p)' : '#cbd5e1';
+                    hd.style.borderColor = h === 'hadicha' ? 'var(--p)' : '#cbd5e1';
+                }
+            },
+            saveNewChild: () => saveNewChild(),
+            switchParentChild: id => { switchActiveChild(id); render(); },
+
+            // Global tovush
+            toggleAudio: () => snd.toggleMute(),
+
+            // Modullar & Mini-o'yinlar
+            syllables: () => go('syllables'),
+            balloons: () => go('balloons'),
+            sylMerge: () => sylMerge(),
+            sylSay: () => {
+                const cur = SYLLABLE_PAIRS[SYL.idx % SYLLABLE_PAIRS.length];
+                say(cur.word);
+            },
+            sylMic: () => sylMic(),
+            sylNext: () => sylNext(),
+            sayTargetColor: () => promptBalloonTarget(),
+
+            // Ota-ona himoyasi & PIN
+            gateMathSwitch() { if (gate) { gate.mode = 'math'; renderGateModal(); } },
+            gatePinSwitch() { if (gate) { gate.mode = 'pin'; renderGateModal(); } },
+            forgotPin() { startForgotPin(); },
+            verifyOtp() { verifyPinOtp(); },
+            pinKey: k => {
+                if (!gate || gate.mode !== 'pin') return;
+                if (k === 'x') {
+                    gate.pinVal = gate.pinVal.slice(0, -1);
+                } else if (k === 'ok') {
+                    checkPinEntry();
+                    return;
+                } else if (gate.pinVal.length < 4) {
+                    gate.pinVal += k;
+                    if (gate.pinVal.length === 4) {
+                        setTimeout(checkPinEntry, 150);
+                    }
+                }
+                renderGateModal();
+            },
+            mathKey: k => {
+                if (!gate || gate.mode !== 'math') return;
+                if (k === 'x') {
+                    gate.mathVal = gate.mathVal.slice(0, -1);
+                } else if (k === 'ok') {
+                    if (+gate.mathVal === gate.mathA + gate.mathB) {
+                        closeOv();
+                        gate = null;
+                        snd.success();
+                        go('parent');
+                        return;
+                    }
+                    snd.wrong();
+                    gate.mathVal = '';
+                    const m = $('#ov .modal');
+                    if (m) { m.classList.remove('shake'); void m.offsetWidth; m.classList.add('shake'); }
+                } else if (gate.mathVal.length < 3) {
+                    gate.mathVal += k;
+                }
+                const gv = $('#gv');
+                if (gv) gv.innerHTML = gate.mathVal || '&nbsp;';
+            },
+            changePin: () => showChangePinModal(),
+            saveNewPin: () => saveNewPin(),
+        };
+        document.addEventListener('click', e => {
+            const t = e.target.closest('[data-a]'); if (!t) return; snd.init(); rt.lastIn = Date.now();
+            const f = A[t.dataset.a]; if (f) { if (!['pickCard', 'tileW', 'ansM', 'buy', 'shapePick', 'heroTap', 'memPick', 'colorPick', 'countPick', 'pinKey', 'mathKey'].includes(t.dataset.a)) snd.click(); f(t.dataset.v, t, e); }
+        });
+        document.addEventListener('pointerdown', () => { rt.lastIn = Date.now(); }, true);
+        document.addEventListener('change', e => {
+            const t = e.target; if (t.dataset.set) { S.settings[t.dataset.set] = +t.value; save(); }
+            if (t.dataset.tog) { S.settings[t.dataset.tog] = t.checked; save(); if (!S.settings.sound && 'speechSynthesis' in window) speechSynthesis.cancel(); snd.sync(); }
+        });
+        document.addEventListener('visibilitychange', () => snd.sync());
+
+        /* ---------- ⚙️ : uzoq bosish + ota-ona PIN qulfi ---------- */
+        let holdT = null;
+        document.addEventListener('pointerdown', e => {
+            const g = e.target.closest('[data-gear]'); if (!g) return; g.classList.add('hold');
+            holdT = setTimeout(() => { g.classList.remove('hold'); openGate(); }, 1400);
+        });
+        ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => document.addEventListener(ev, e => { clearTimeout(holdT); const g = $('#gear'); g && g.classList.remove('hold'); }, true));
+
+        let gate = null;
+        function openGate() {
+            snd.click();
+            gate = { mode: 'pin', pinVal: '', mathA: 8 + rnd(12), mathB: 4 + rnd(10), mathVal: '', serverCode: '' };
+            renderGateModal();
+        }
+
+        function renderGateModal() {
+            if (!gate) return;
+            if (gate.mode === 'pin') {
+                const dots = [0, 1, 2, 3].map(i => `<span class="pin-dot ${gate.pinVal.length > i ? 'filled' : ''}"></span>`).join('');
+                overlay(`<div class="modal">
+                    <div style="font-size:36px">🔒</div>
+                    <h2 style="margin:6px 0 2px">Ota-onalar kodi</h2>
+                    <div style="font-size:13px;opacity:.7">4 xonali PIN kodni kiriting (Standart: 1234)</div>
+                    <div class="pin-display">${dots}</div>
+                    <div class="pin-keypad">
+                        ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button class="pin-key" data-a="pinKey" data-v="${n}">${n}</button>`).join('')}
+                        <button class="pin-key" data-a="pinKey" data-v="x">⌫</button>
+                        <button class="pin-key" data-a="pinKey" data-v="0">0</button>
+                        <button class="pin-key" data-a="pinKey" data-v="ok" style="background:#bbf7d0">✔</button>
+                    </div>
+                    <div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap">
+                        <button class="btn alt" data-a="gateMathSwitch">🔢 Arifmetik qulf</button>
+                        <button class="btn alt" data-a="forgotPin">❓ PINni tiklash</button>
+                        <button class="btn alt" data-a="closeov">Bekor qilish</button>
+                    </div>
+                </div>`);
+            } else if (gate.mode === 'math') {
+                overlay(`<div class="modal">
+                    <div style="font-size:36px">🧮</div>
+                    <div style="font-size:15px;opacity:.7">Davom etish uchun hisoblang:</div>
+                    <h2 style="margin:6px 0">${gate.mathA} + ${gate.mathB} = ?</h2>
+                    <div class="gval" id="gv">${gate.mathVal || '&nbsp;'}</div>
+                    <div class="pin-keypad">
+                        ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button class="pin-key" data-a="mathKey" data-v="${n}">${n}</button>`).join('')}
+                        <button class="pin-key" data-a="mathKey" data-v="x">⌫</button>
+                        <button class="pin-key" data-a="mathKey" data-v="0">0</button>
+                        <button class="pin-key" data-a="mathKey" data-v="ok" style="background:#bbf7d0">✔</button>
+                    </div>
+                    <div class="row" style="margin-top:14px;gap:8px">
+                        <button class="btn alt" data-a="gatePinSwitch">🔑 PIN orqali</button>
+                        <button class="btn alt" data-a="closeov">Bekor qilish</button>
+                    </div>
+                </div>`);
+            } else if (gate.mode === 'recover') {
+                overlay(`<div class="modal">
+                    <div style="font-size:36px">📧</div>
+                    <h2 style="margin:6px 0">PIN kodni tiklash</h2>
+                    <div style="font-size:13px;opacity:.75;max-width:320px;margin-bottom:12px">
+                        Ro'yxatdan o'tgan pochta orqali yuborilgan 6 xonali tiklash kodini (OTP) kiriting:
+                        ${gate.serverCode ? `<br><b style="color:#059669">Tiklash kodi: ${gate.serverCode}</b>` : ''}
+                    </div>
+                    <input id="otpIn" class="field" type="text" maxlength="6" placeholder="123456" style="text-align:center;font-size:24px;letter-spacing:6px;font-weight:700">
+                    <div id="otpErr" style="color:#ef4444;font-size:14px;min-height:22px"></div>
+                    <div class="row">
+                        <button class="btn alt" data-a="gatePinSwitch">Orqaga</button>
+                        <button class="btn" data-a="verifyOtp">Tasdiqlash</button>
+                    </div>
+                </div>`);
+                setTimeout(() => { const el = $('#otpIn'); el && el.focus(); }, 100);
+            }
+        }
+
+        function checkPinEntry() {
+            const correctPin = S.parentPin || '1234';
+            if (gate && gate.pinVal === correctPin) {
+                closeOv();
+                gate = null;
+                snd.success();
+                go('parent');
+            } else {
+                snd.wrong();
+                if (gate) gate.pinVal = '';
+                const m = $('#ov .modal');
+                if (m) { m.classList.remove('shake'); void m.offsetWidth; m.classList.add('shake'); }
+                renderGateModal();
+            }
+        }
+
+        async function startForgotPin() {
+            if (!gate) return;
+            gate.mode = 'recover';
+            gate.serverCode = '';
+            renderGateModal();
+            try {
+                const resp = await fetch('/api/auth/parent/pin-recover', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ uid: UID, email: (S.auth && S.auth.id) || '' })
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.code) {
+                        gate.serverCode = data.code;
+                        renderGateModal();
+                        return;
+                    }
+                }
+            } catch (_) {}
+            // Oflayn yoki lokal rejimda tezkor OTP generator
+            const localCode = String(Math.floor(100000 + Math.random() * 900000));
+            gate.serverCode = localCode;
+            renderGateModal();
+        }
+
+        function verifyPinOtp() {
+            const entered = ($('#otpIn').value || '').trim();
+            const err = $('#otpErr');
+            if (entered.length !== 6) {
+                if (err) err.textContent = "6 xonali kodni to'liq kiriting";
+                return;
+            }
+            if (gate.serverCode && entered !== gate.serverCode) {
+                if (err) err.textContent = "Noto'g'ri kod! Qayta urinib ko'ring";
+                snd.wrong();
+                return;
+            }
+            closeOv();
+            gate = null;
+            snd.success();
+            say("PIN kod muvaffaqiyatli tiklandi!");
+            go('parent');
+        }
+
+        function showChangePinModal() {
+            overlay(`<div class="modal">
+                <h2>Ota-ona PIN kodi</h2>
+                <p style="font-size:14px;opacity:.7">Yangi 4 xonali PIN kodni kiriting:</p>
+                <input id="newPinIn" class="field" type="password" maxlength="4" inputmode="numeric" placeholder="****" style="text-align:center;font-size:32px;letter-spacing:12px;font-weight:700">
+                <div id="newPinErr" style="color:#ef4444;font-size:14px;min-height:22px"></div>
+                <div class="row">
+                    <button class="btn alt" data-a="closeov">Bekor qilish</button>
+                    <button class="btn" data-a="saveNewPin">Saqlash</button>
+                </div>
+            </div>`);
+            setTimeout(() => { const el = $('#newPinIn'); el && el.focus(); }, 100);
+        }
+
+        function saveNewPin() {
+            const v = ($('#newPinIn').value || '').trim();
+            const err = $('#newPinErr');
+            if (!/^\d{4}$/.test(v)) {
+                if (err) err.textContent = "PIN 4 ta raqamdan iborat bo'lishi kerak";
+                return;
+            }
+            S.parentPin = v;
+            save();
+            closeOv();
+            snd.success();
+            say("PIN kod muvaffaqiyatli saqlandi!");
+        }
+
+        A.gk = (v) => {
+            if (!gate) return;
+            if (v === 'x') gate.v = (gate.v || '').slice(0, -1);
+            else if (v === 'ok') { if (+gate.v === gate.a + gate.b) { closeOv(); gate = null; go('parent'); return; } snd.wrong(); const m = $('#ov .modal'); m.classList.remove('shake'); void m.offsetWidth; m.classList.add('shake'); gate.v = ''; }
+            else if ((gate.v || '').length < 3) gate.v = (gate.v || '') + v;
+            const gv = $('#gv'); if (gv) gv.innerHTML = gate.v || '&nbsp;';
+        };
+
+        /* =====================================================================
+           10. AQLLI DAM OLISH TIZIMI
+           ===================================================================== */
+        function showBreak() {
+            rt.exSince = 0; rt.studySec = 0;
+            overlay(`<div class="modal kid"><div style="position:relative;width:170px"><div class="bob">${heroSVG(S.hero, 'cheer')}</div><div class="bubble" style="right:-70px">🎮❓</div></div><div class="row"><button class="ibtn big ok" data-a="breakYes">🎮</button><button class="ibtn big no" data-a="breakNo">⏭️</button></div></div>`);
+            snd.giggle(); say(BREAK_TXT);
+        }
+        A.breakYes = () => { go('games'); };
+        A.breakNo = () => { closeOv(); rt.studySec = Math.max(0, S.settings.breakMin * 60 - 180); rt.exSince = 0; };
+        function showReturn() {
+            rt.retShown = true;
+            overlay(`<div class="modal kid"><div style="position:relative;width:170px"><div class="bob">${heroSVG(S.hero, 'happy')}</div><div class="bubble" style="right:-70px">📚❓</div></div><div class="row"><button class="ibtn big ok" data-a="retYes">📚</button><button class="ibtn big no" data-a="retNo">⏩</button></div></div>`);
+            snd.giggle(); say(RETURN_TXT);
+        }
+        A.retYes = () => { rt.studySec = 0; rt.exSince = 0; go('letters'); };
+        A.retNo = () => { closeOv(); rt.gameSec = Math.max(0, S.settings.gameMin * 60 - 120); rt.retShown = false; };
+        function showLimit() {
+            rt.limitShown = true;
+            overlay(`<div class="modal kid"><div style="width:170px">${heroSVG(S.hero, 'sad')}</div><div class="bigemo">😴🌙</div></div>`); say("Bugun yetarli o'qidik. Ertaga yana ko'ramiz!");
+        }
+        setInterval(() => {
+            if (document.hidden || !S.auth || ['auth', 'pick', 'parent'].includes(rt.scr)) return;
+            if (Date.now() - rt.lastIn > 120000) { rt.studySec = 0; return; }
+            const d = day(); d.sec++; S.totalSec++;
+            const lim = S.settings.dailyMin;
+            if (lim && d.sec >= lim * 60 && !rt.limitShown && !rt.ov) { showLimit(); return; }
+            if (rt.scr === 'games') { rt.gameSec++; if (rt.gameSec >= S.settings.gameMin * 60 && !rt.retShown && !rt.ov) showReturn(); }
+            else { rt.studySec++; if ((rt.studySec >= S.settings.breakMin * 60 || rt.exSince >= 10) && !rt.ov && !rt.drawing) showBreak(); }
+            if (++rt.tick % 10 === 0) save();
+        }, 1000);
+
+        /* =====================================================================
+           11. ISHGA TUSHIRISH
+           ===================================================================== */
+        fxInit();
+        addEventListener('beforeunload', () => { save(); if (localStorage.getItem(DIRTY_KEY) === '1') pushState(true); });
+        syncFromServer().finally(() => go(!S.auth ? 'auth' : (!S.hero ? 'pick' : 'home')));
+    </script>
+</body>
+
+</html>

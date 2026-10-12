@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Zukko Bolajon</string>
+    <string name="title_activity_main">Zukko Bolajon</string>
+    <string name="package_name">uz.zukkobolajon.app</string>
+    <string name="custom_url_scheme">uz.zukkobolajon.app</string>
+</resources>
